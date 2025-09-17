@@ -177,6 +177,10 @@
       font-weight: bold;
     }
   </style>
+  <!-- Add Farcaster SDK via CDN -->
+  <script type="module">
+    import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk';
+  </script>
 </head>
 <body>
   <div class="container">
@@ -251,7 +255,7 @@
   const JACKPOT_INC = 250;
   let JACKPOT = 2500;
   let blockHeight = 0;
-  let locked = true; // Initially locked until a new round starts
+  let locked = true;
   let guesses = [];
   let myGuess = null;
   let myFid = null;
@@ -338,7 +342,7 @@
 
     const winner = ranked[0];
     byId('winnerBanner').textContent = `🎉 Winner: ${winner.name} (${winner.guess} txs)`;
-    createConfetti(); // Visual feedback
+    createConfetti();
 
     byId('playersList').innerHTML = ranked.map((g, i) => {
       return `<li>${g.name || `Player ${i + 1}`}: ${g.guess} (${g.diff}) ${i === 0 ? '🏆' : ''}</li>`;
@@ -491,16 +495,20 @@
   async function initFarcasterSDK() {
     try {
       await sdk.actions.ready();
+      console.log('Farcaster SDK initialized successfully.');
     } catch (error) {
       console.error('Error initializing Farcaster SDK:', error);
     }
   }
 
   /* --- INITIAL RENDER --- */
-  readHash();
-  renderPlayers();
-  setupNotifications();
-  resetRound(); // Enable the input and button for the first round
+  document.addEventListener('DOMContentLoaded', () => {
+    readHash();
+    renderPlayers();
+    initFarcasterSDK();
+    setupNotifications();
+    resetRound();
+  });
 </script>
 </body>
 </html>

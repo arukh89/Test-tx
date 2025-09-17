@@ -1,8 +1,8 @@
 {
   "accountAssociation": {
-    "header": "your-farcaster-header",
-    "payload": "your-farcaster-payload",
-    "signature": "your-farcaster-signature"
+    "header": "eyJmaWQiOjI1MDcwNCwidHlwZSI6ImF1dGgiLCJrZXkiOiIweDA5RDAyRDI1RDBEMDgyZjdGMkUwNGI0ODM4Y0VmZTI3MWIyZGFCMDkifQ",
+    "payload": "eyJkb21haW4iOiJ0ZXN0dHgubmV0bGlmeS5hcHAifQ",
+    "signature": "ym/CQ90fZcYVU/jl2t967FR6iIjemU61zGiuGoG9Gr0IUal/uNH+5UcGOWox0H//9+WSoKQlX5WH8UcBANu1sBw="
   },
   "miniapp": {
     "version": "1",
@@ -18,8 +18,6 @@
     "heroImageUrl": "https://testtx.netlify.app/hero.png",
     "ogTitle": "TX Battle Royale",
     "ogDescription": "Predict Bitcoin block transactions and win rewards",
-    "ogImageUrl": "https://testtx.netlify.app/og.png",
-    "fid": 250704,
-    "wallet": "0x09D02D25D0D082f7F2E04b4838cEfe271b2daB09"
+    "ogImageUrl": "https://testtx.netlify.app/og.png"
   }
 }

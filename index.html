@@ -251,7 +251,7 @@
   const JACKPOT_INC = 250;
   let JACKPOT = 2500;
   let blockHeight = 0;
-  let locked = false;
+  let locked = true; // Initially locked until a new round starts
   let guesses = [];
   let myGuess = null;
   let myFid = null;
@@ -487,26 +487,20 @@
     }
   }
 
-  function notifyWinner(winner) {
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification('TX Battle Royale', {
-        body: `🎉 ${winner.name} won the round with ${winner.guess} txs!`
-      });
+  /* --- SDK Integration --- */
+  async function initFarcasterSDK() {
+    try {
+      await sdk.actions.ready();
+    } catch (error) {
+      console.error('Error initializing Farcaster SDK:', error);
     }
-  }
-
-  /* --- FARCASTER INTEGRATION (IF AVAILABLE) --- */
-  if (window.fc && window.fc.user) {
-    myFid = window.fc.user.fid;
-    myName = window.fc.user.username || 'Anon';
-    byId('fids').textContent = `(${myFid} FID)`;
   }
 
   /* --- INITIAL RENDER --- */
   readHash();
   renderPlayers();
   setupNotifications();
-  notifyNewRound();
+  resetRound(); // Enable the input and button for the first round
 </script>
 </body>
 </html>

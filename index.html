@@ -183,9 +183,50 @@
   </script>
 
   <!-- Add the fc:miniapp meta tag for embedding -->
-  <meta name="fc:miniapp" content='{"version":"1","imageUrl":"https://testtx.netlify.app/splash.png","button":{"title":"Open TX Battle Royale","action":{"type":"launch_frame","name":"TX Battle Royale","url":"https://testtx.netlify.app/index.html","splashImageUrl":"https://testtx.netlify.app/splash.png","splashBackgroundColor":"#1a1a4a"}}}' />
+  <meta name="fc:miniapp" content='{"version":"1","imageUrl":"https://testtx.netlify.app/splash.png","button":{"title":"Open TX Battle Royale","action":{"type":"launch_frame","name":"TX Battle Royale","url":"https://testtx.netlify.app/index.html","splashImageUrl":"https://testtx.netlify.app/splash.png","splashBackgroundColor":"#1a1a4a"}}'>
+  
+  <!-- Loading Screen -->
+  <style>
+    .loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #1a1a4a 0%, #4a1a66 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 1;
+      transition: opacity 0.5s ease-out;
+    }
+
+    .loading-screen.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
 </head>
 <body>
+  <!-- Loading Screen -->
+  <div id="loadingScreen" class="loading-screen">
+    <div class="loading-spinner"></div>
+  </div>
+
   <div class="container">
     <header>
       <h1>$Seconds Bitcoin TX Battle Royale</h1>
@@ -209,8 +250,8 @@
     </div>
 
     <div class="guess-form">
-      <input id="guessInp" type="number" placeholder="Your guess" disabled>
-      <button id="lockBtn" onclick="lockGuess()" disabled>Join Battle</button>
+      <input id="guessInp" type="number" placeholder="Your guess">
+      <button id="lockBtn" onclick="lockGuess()">Join Battle</button>
     </div>
 
     <div id="winnerBanner"></div>
@@ -263,6 +304,7 @@
   let myGuess = null;
   let myFid = null;
   let myName = 'Anon';
+  let sdk;
 
   /* --- URL STATE MANAGEMENT --- */
   function readHash() {
@@ -494,24 +536,97 @@
     }
   }
 
-  /* --- SDK Integration --- */
-  async function initFarcasterSDK() {
+  /* --- SDK Integration and Initialization --- */
+  async function initializeMiniApp() {
     try {
+      console.log('Initializing Farcaster MiniApp SDK...');
+
+      // Import the SDK from CDN
+      const { sdk: farcasterSdk } = await import('https://esm.sh/@farcaster/miniapp-sdk');
+      sdk = farcasterSdk;
+
+      console.log('SDK imported successfully');
+
+      // Wait for DOM to be ready
+      if (document.readyState === 'loading') {
+        await new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve));
+      }
+
+      console.log('DOM ready, calling sdk.actions.ready()...');
+
+      // This is the CRITICAL call that fixes "Ready not called" error
       await sdk.actions.ready();
-      console.log('Farcaster SDK initialized successfully.');
+
+      console.log('MiniApp is ready!');
+
+      // Hide loading screen and show content
+      showContent();
+
+      // Set up event listeners
+      setupEventListeners();
+
     } catch (error) {
-      console.error('Error initializing Farcaster SDK:', error);
+      console.error('Failed to initialize MiniApp:', error);
+      showError();
     }
   }
 
+  function showContent() {
+    const loadingScreen = document.getElementById('loadingScreen');
+    const mainContainer = document.querySelector('.container');
+
+    // Hide loading screen
+    loadingScreen.classList.add('hidden');
+
+    // Show main content with animation
+    setTimeout(() => {
+      mainContainer.style.opacity = '1';
+      mainContainer.style.transform = 'translateY(0)';
+    }, 100);
+  }
+
+  function showError() {
+    const loadingScreen = document.getElementById('loadingScreen');
+    const mainContainer = document.querySelector('.container');
+    const errorMessage = document.createElement('div');
+    errorMessage.style.background = 'rgba(255, 0, 0, 0.1)';
+    errorMessage.style.border = '1px solid rgba(255, 0, 0, 0.3)';
+    errorMessage.style.color = 'white';
+    errorMessage.style.padding = '15px';
+    errorMessage.style.borderRadius = '10px';
+    errorMessage.style.marginBottom = '20px';
+    errorMessage.textContent = '⚠️ Failed to initialize MiniApp SDK. Please refresh the page.';
+
+    loadingScreen.classList.add('hidden');
+    mainContainer.insertBefore(errorMessage, mainContainer.firstChild);
+  }
+
+  function setupEventListeners() {
+    // Existing event listeners
+    document.getElementById('lockBtn').onclick = lockGuess;
+    document.getElementById('chatInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendMessage();
+    });
+  }
+
   /* --- INITIAL RENDER --- */
-  document.addEventListener('DOMContentLoaded', () => {
-    readHash();
-    renderPlayers();
-    initFarcasterSDK();
-    setupNotifications();
-    resetRound();
-  });
+  // Start initialization
+  initializeMiniApp();
+
+  // Fallback timeout
+  setTimeout(() => {
+    const loadingScreen = document.getElementById('loadingScreen');
+    if (!loadingScreen.classList.contains('hidden')) {
+      console.warn('SDK initialization timeout, showing content anyway');
+      showContent();
+    }
+  }, 10000); // 10 second timeout
+
+  // Your existing functions
+  function lockGuess() { /* ... */ }
+  function resetRound() { /* ... */ }
+  function sendMessage() { /* ... */ }
+  // ... other functions
 </script>
 </body>
 </html>

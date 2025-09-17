@@ -11,7 +11,7 @@
     "splashImageUrl": "https://testtx.netlify.app/splash.png",
     "splashBackgroundColor": "#1a1a4a",
     "homeUrl": "https://testtx.netlify.app/index.html",
-    "subtitle": "Predict Bitcoin block transactions",
+    "subtitle": "Predict BTC transactions",
     "description": "Real-time blockchain competition with miggles.eth",
     "primaryCategory": "social",
     "tags": ["blockchain", "games"],

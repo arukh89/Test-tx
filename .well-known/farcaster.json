@@ -1,0 +1,23 @@
+{
+  "accountAssociation": {
+    "header": "your-farcaster-header",
+    "payload": "your-farcaster-payload",
+    "signature": "your-farcaster-signature"
+  },
+  "miniapp": {
+    "version": "1",
+    "name": "TX Battle Royale",
+    "iconUrl": "https://yourdomain.com/icons/icon-192.png",
+    "splashImageUrl": "https://yourdomain.com/splash.png",
+    "splashBackgroundColor": "#1a1a4a",
+    "homeUrl": "https://yourdomain.com/index.html",
+    "subtitle": "Predict Bitcoin block transactions",
+    "description": "Real-time blockchain competition with miggles.eth",
+    "primaryCategory": "social",
+    "tags": ["blockchain", "games"],
+    "heroImageUrl": "https://yourdomain.com/hero.png",
+    "ogTitle": "TX Battle Royale",
+    "ogDescription": "Predict Bitcoin block transactions and win rewards",
+    "ogImageUrl": "https://yourdomain.com/og.png"
+  }
+}

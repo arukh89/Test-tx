@@ -185,6 +185,16 @@
   <!-- Add the fc:miniapp meta tag for embedding -->
   <meta name="fc:miniapp" content='{"version":"1","imageUrl":"https://testtx.netlify.app/splash.png","button":{"title":"Open TX Battle Royale","action":{"type":"launch_frame","name":"TX Battle Royale","url":"https://testtx.netlify.app/index.html","splashImageUrl":"https://testtx.netlify.app/splash.png","splashBackgroundColor":"#1a1a4a"}}'>
   
+  <!-- Embedding Meta Tags for Farcaster -->
+  <meta property="fc:frame" content="v1">
+  <meta property="fc:frame:title" content="TX Battle Royale">
+  <meta property="fc:frame:description" content="Predict Bitcoin block transactions and win rewards">
+  <meta property="fc:frame:image" content="https://testtx.netlify.app/splash.png">
+  <meta property="fc:frame:image:aspect_ratio" content="3:2">
+  <meta property="fc:frame:button:1" content="Join Battle">
+  <meta property="fc:frame:button:1:action" content="link">
+  <meta property="fc:frame:button:1:target" content="https://testtx.netlify.app/index.html">
+
   <!-- Loading Screen -->
   <style>
     .loading-screen {
@@ -621,12 +631,6 @@
       showContent();
     }
   }, 10000); // 10 second timeout
-
-  // Your existing functions
-  function lockGuess() { /* ... */ }
-  function resetRound() { /* ... */ }
-  function sendMessage() { /* ... */ }
-  // ... other functions
 </script>
 </body>
 </html>

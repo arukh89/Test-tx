@@ -182,61 +182,11 @@
     import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk';
   </script>
 
-  <!-- Add the fc:miniapp meta tag for embedding -->
-  <meta name="fc:miniapp" content='{"version":"1","imageUrl":"https://testtx.netlify.app/splash.png","button":{"title":"Open TX Battle Royale","action":{"type":"launch_frame","name":"TX Battle Royale","url":"https://testtx.netlify.app/index.html","splashImageUrl":"https://testtx.netlify.app/splash.png","splashBackgroundColor":"#1a1a4a"}}'>
-  
-  <!-- Embedding Meta Tags for Farcaster -->
-  <meta property="fc:frame" content="v1">
-  <meta property="fc:frame:title" content="TX Battle Royale">
-  <meta property="fc:frame:description" content="Predict Bitcoin block transactions and win rewards">
-  <meta property="fc:frame:image" content="https://testtx.netlify.app/splash.png">
-  <meta property="fc:frame:image:aspect_ratio" content="3:2">
-  <meta property="fc:frame:button:1" content="Join Battle">
-  <meta property="fc:frame:button:1:action" content="link">
-  <meta property="fc:frame:button:1:target" content="https://testtx.netlify.app/index.html">
-
-  <!-- Loading Screen -->
-  <style>
-    .loading-screen {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(135deg, #1a1a4a 0%, #4a1a66 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-      opacity: 1;
-      transition: opacity 0.5s ease-out;
-    }
-
-    .loading-screen.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .loading-spinner {
-      width: 40px;
-      height: 40px;
-      border: 4px solid rgba(255, 255, 255, 0.3);
-      border-radius: 50%;
-      border-top-color: white;
-      animation: spin 1s ease-in-out infinite;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-  </style>
+  <!-- Embedding Meta Tags -->
+  <meta name="fc:miniapp" content='{"version":"1","imageUrl":"https://testtx.netlify.app/splash.png","button":{"title":"Join Battle","action":{"type":"launch_miniapp","name":"TX Battle Royale","url":"https://testtx.netlify.app/index.html","splashImageUrl":"https://testtx.netlify.app/splash.png","splashBackgroundColor":"#1a1a4a"}}'>
+  <meta name="fc:frame" content='{"version":"1","imageUrl":"https://testtx.netlify.app/splash.png","button":{"title":"Join Battle","action":{"type":"launch_frame","name":"TX Battle Royale","url":"https://testtx.netlify.app/index.html","splashImageUrl":"https://testtx.netlify.app/splash.png","splashBackgroundColor":"#1a1a4a"}}'>
 </head>
 <body>
-  <!-- Loading Screen -->
-  <div id="loadingScreen" class="loading-screen">
-    <div class="loading-spinner"></div>
-  </div>
-
   <div class="container">
     <header>
       <h1>$Seconds Bitcoin TX Battle Royale</h1>

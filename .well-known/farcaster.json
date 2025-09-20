@@ -11,34 +11,22 @@
     "splashImageUrl": "https://testtx.netlify.app/splash.png",
     "splashBackgroundColor": "#1a1a4a",
     "homeUrl": "https://testtx.netlify.app/index.html",
-    "subtitle": "Bitcoin Transaction Prediction Game",
-    "description": "Join the ultimate real-time Bitcoin block transaction prediction battle! Compete with other Farcaster users to guess the exact number of transactions in upcoming Bitcoin blocks. The closest prediction wins each round!",
+    "imageUrl": "https://testtx.netlify.app/og.png",
+    "buttonTitle": "Join Battle",
+    "subtitle": "BTC Prediction Game",
+    "description": "Predict Bitcoin transactions in real time! Compete with others to guess the number of txs per block — closest wins the round!",
     "primaryCategory": "social",
-    "tags": [
-      "blockchain",
-      "bitcoin",
-      "prediction",
-      "game",
-      "competition",
-      "realtime"
-    ],
+    "tags": ["bitcoin", "blockchain", "prediction", "game"],
     "heroImageUrl": "https://testtx.netlify.app/hero.png",
-    "ogTitle": "TX Battle Royale - Bitcoin Prediction Game",
-    "ogDescription": "Real-time Bitcoin transaction prediction battle on Farcaster. Guess block transactions, compete with friends, and climb the leaderboard!",
+    "ogTitle": "TX Battle Royale",
+    "ogDescription": "Predict Bitcoin transactions on Farcaster. Guess block txs and climb the leaderboard!",
     "ogImageUrl": "https://testtx.netlify.app/og.png",
     "button": {
       "title": "Join Battle",
-      "action": {
-        "type": "launch"
-      }
+      "action": { "type": "launch" }
     },
     "permissions": ["user:read"],
-    "features": [
-      "real-time-updates",
-      "multiplayer",
-      "leaderboard",
-      "chat"
-    ],
+    "features": ["real-time-updates", "multiplayer", "leaderboard", "chat"],
     "author": {
       "name": "TX Battle Team",
       "url": "https://testtx.netlify.app"

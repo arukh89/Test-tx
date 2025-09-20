@@ -3,9 +3,8 @@ const sdk = window.farcaster;
 let currentUser = null;
 let currentBlock = null;
 let players = [];
-let lastUpdateTime = null; // track block fetch timestamp
+let lastUpdateTime = null; // Track block fetch timestamp
 
-/* === SDK Initialization === */
 async function initializeFarcasterSDK() {
   try {
     await sdk.init();
@@ -13,29 +12,24 @@ async function initializeFarcasterSDK() {
 
     currentUser = await sdk.user.getCurrent();
     if (currentUser) {
-      const userInfo = document.getElementById("userInfo");
-      if (userInfo) userInfo.style.display = "block";
-      const userName = document.getElementById("userName");
-      if (userName) userName.textContent = currentUser.username;
-      const userFid = document.getElementById("userFid");
-      if (userFid) userFid.textContent = currentUser.fid;
+      document.getElementById("userInfo").style.display = "block";
+      document.getElementById("userName").textContent = currentUser.username;
+      document.getElementById("userFid").textContent = currentUser.fid;
     }
 
     connectToBitcoinNetwork();
   } catch (err) {
-    console.error("❌ SDK Init failed:", err);
+    console.error("❌ SDK initialization failed:", err);
     showError("Failed to initialize Farcaster Miniapp SDK");
   }
 }
 
-/* === Bitcoin Data Fetch === */
 function connectToBitcoinNetwork() {
   try {
     fetchCurrentBlock();
-    setInterval(fetchCurrentBlock, 30000); // refresh every 30s
-    setInterval(updateTimeAgo, 1000); // refresh "time ago" every second
+    setInterval(fetchCurrentBlock, 30000); // Refresh every 30 seconds
+    setInterval(updateTimeAgo, 1000); // Update "time ago" every second
 
-    // hide loading and show app container
     document.getElementById("loadingScreen")?.classList.add("hidden");
     document.getElementById("app")?.classList.remove("hidden");
   } catch (err) {
@@ -50,22 +44,18 @@ async function fetchCurrentBlock() {
     const blocks = await response.json();
     currentBlock = blocks[0];
 
-    // ✅ Update live ticker
+    document.getElementById("currentBlockHeight").textContent = currentBlock.height;
+    document.getElementById("estimatedTxCount").textContent = currentBlock.tx_count || "N/A";
+
     updateStatusTicker(currentBlock);
-
-    // ✅ Remove skeleton shimmer
     removeLeaderboardSkeleton();
-
-    // ✅ Track update time
     lastUpdateTime = Date.now();
-
   } catch (err) {
     console.error("⚠️ Block fetch error:", err);
     showError("Error fetching current block");
   }
 }
 
-/* === Status Ticker === */
 function updateStatusTicker(block) {
   const statusEl = document.getElementById("status");
   if (statusEl && block) {
@@ -78,7 +68,6 @@ function updateStatusTicker(block) {
   }
 }
 
-/* === "Last updated X seconds ago" updater === */
 function updateTimeAgo() {
   if (!lastUpdateTime) return;
   const timeAgoEl = document.getElementById("timeAgo");
@@ -95,16 +84,16 @@ function updateTimeAgo() {
   }
 }
 
-/* === Predictions === */
 document
   .getElementById("submitPrediction")
   ?.addEventListener("click", () => {
     const input = document.getElementById("predictionInput");
     const guess = parseInt(input.value);
     if (isNaN(guess) || guess <= 0) {
-      alert("Enter a valid prediction");
+      alert("Please enter a valid prediction (positive number).");
       return;
     }
+
     players.push({ fid: currentUser?.fid || "anon", guess });
     updatePlayersList();
     input.value = "";
@@ -113,21 +102,19 @@ document
 function updatePlayersList() {
   const list = document.getElementById("playersList");
   if (!list) return;
-  list.innerHTML = "";
 
+  list.innerHTML = "";
   list.classList.remove("skeleton");
 
-  players.forEach((p) => {
+  players.forEach((player) => {
     const li = document.createElement("li");
-    li.textContent = `FID ${p.fid}: ${p.guess}`;
+    li.textContent = `FID ${player.fid}: ${player.guess}`;
     list.appendChild(li);
   });
 
-  const countEl = document.getElementById("playersCount");
-  if (countEl) countEl.textContent = players.length;
+  document.getElementById("playersCount")?.textContent = players.length;
 }
 
-/* === Remove Skeleton Utility === */
 function removeLeaderboardSkeleton() {
   const list = document.getElementById("leaderboardList");
   if (list) {
@@ -135,10 +122,8 @@ function removeLeaderboardSkeleton() {
   }
 }
 
-/* === Chat === */
 document.getElementById("sendMessage")?.addEventListener("click", () => {
   const input = document.getElementById("chatInput");
-  if (!input) return;
   const msg = input.value.trim();
   if (!msg) return;
 
@@ -152,7 +137,6 @@ document.getElementById("sendMessage")?.addEventListener("click", () => {
   input.value = "";
 });
 
-/* === Social Sharing === */
 function shareGame() {
   try {
     sdk.share({
@@ -179,42 +163,16 @@ function shareWin() {
   }
 }
 
-/* === Error Handling === */
 function showError(msg) {
   document.getElementById("loadingScreen")?.classList.add("hidden");
   document.getElementById("app")?.classList.add("hidden");
   const err = document.getElementById("errorScreen");
   if (err) {
-    document.getElementById("errorMessage").textContent = msg;
+    document.getElementById("errorMessage")?.textContent = msg;
     err.classList.remove("hidden");
   }
 }
 
-/* === Join Battle Button === */
-document.getElementById("joinButton")?.addEventListener("click", () => {
-  console.log("🚀 Join Battle clicked!");
-
-  // 1️⃣ Show game UI
-  const gameUI = document.getElementById("gameUI");
-  if (gameUI) {
-    gameUI.classList.remove("hidden");
-    gameUI.scrollIntoView({ behavior: "smooth" });
-  }
-
-  // 2️⃣ Try launching Farcaster Miniapp (if inside Warpcast)
-  try {
-    if (sdk?.launch) {
-      sdk.launch();
-      console.log("✅ Farcaster miniapp launch triggered");
-    } else {
-      console.log("ℹ️ Not inside Farcaster (skipping sdk.launch)");
-    }
-  } catch (err) {
-    console.error("❌ Join Battle launch failed:", err);
-  }
-});
-
-/* === Start App === */
 window.addEventListener("load", () => {
   initializeFarcasterSDK();
 });

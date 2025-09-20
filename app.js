@@ -329,7 +329,6 @@ async function initializeMiniApp() {
     }
 
     console.log('DOM ready, calling sdk.actions.ready()...');
-    // This is the CRITICAL call that fixes "Ready not called" error
     await sdk.actions.ready();
 
     console.log('MiniApp is ready!');
@@ -376,12 +375,15 @@ function setupEventListeners() {
 }
 
 /* --- INITIAL RENDER --- */
+// Start initialization
 initializeMiniApp();
 
+// Fallback timeout reduced to 5 seconds
 setTimeout(() => {
   const loadingScreen = document.getElementById('loadingScreen');
   if (!loadingScreen.classList.contains('hidden')) {
     console.warn('SDK initialization timeout, showing content anyway');
     showContent();
   }
-}, 10000);
+}, 5000);
+      

@@ -95,7 +95,8 @@
   </div>
 
   <script type="module">
-    import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk';
+    import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk@0.1.10';
+    window.sdk = sdk; // Make the SDK available globally
   </script>
   <script src="app.js"></script>
 </body>

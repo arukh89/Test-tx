@@ -292,7 +292,7 @@ async function fetchNextBlock() {
 /* --- Farcaster Integration --- */
 async function connectWallet() {
   try {
-    const { sdk: farcasterSdk } = await import('https://esm.sh/@farcaster/miniapp-sdk');
+    const { sdk: farcasterSdk } = await import('https://esm.sh/@farcaster/miniapp-sdk@0.1.10');
     sdk = farcasterSdk;
 
     const { fid, name } = await sdk.actions.signIn();
@@ -311,6 +311,10 @@ async function connectWallet() {
 async function initializeMiniApp() {
   try {
     console.log('Initializing Farcaster MiniApp SDK...');
+
+    // Import the SDK dynamically
+    const farcasterSdk = await import('https://esm.sh/@farcaster/miniapp-sdk@0.1.10');
+    sdk = farcasterSdk.default; // Use the default export
 
     try {
       const user = await sdk.user.get();
@@ -375,7 +379,6 @@ function setupEventListeners() {
 }
 
 /* --- INITIAL RENDER --- */
-// Start initialization
 initializeMiniApp();
 
 // Fallback timeout reduced to 5 seconds

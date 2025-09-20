@@ -1,8 +1,8 @@
 {
   "accountAssociation": {
-    "header": "PASTE_HEADER_FROM_CLI",
-    "payload": "PASTE_PAYLOAD_FROM_CLI",
-    "signature": "PASTE_SIGNATURE_FROM_CLI"
+    "header": "eyJmaWQiOjI1MDcwNCwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweDE1MzY1NzE0NWVBMmQ1Nzk2OTFhMTQ2YzdFYTRDRkFFMzdEMjdGYWUifQ",
+    "payload": "eyJkb21haW4iOiJ0ZXN0dHgubmV0bGlmeS5hcHAifQ",
+    "signature": "MHgzYTQyYTU4YjcwY2U0ZmI3NWRjNTJiNzUzNGM3YWZmNjkxNzBhOTI0MjQ5ZDk0ZWM1ZjhmY2ZmMTY1ZTBmYWUzMjhjODI0MTRjYmM5NDlmZWZhODMzYWFkMjZjZGVmODc1YTU2NWU3YzgzODUzYWUzMGJkYjA2MzcxMTRjMzMxNzFi"
   },
   "miniapp": {
     "version": "1",
@@ -10,20 +10,20 @@
     "iconUrl": "https://testtx.netlify.app/icons/icon-192.png",
     "splashImageUrl": "https://testtx.netlify.app/splash.png",
     "splashBackgroundColor": "#1a1a4a",
-    "homeUrl": "https://testtx.netlify.app/index.html",
-    "imageUrl": "https://testtx.netlify.app/og.png",
-    "buttonTitle": "Join Battle",
-    "subtitle": "BTC Prediction Game",
-    "description": "Predict Bitcoin transactions in real time! Compete with others to guess the number of txs per block — closest wins the round!",
+    "homeUrl": "https://testtx.netlify.app/",
+    "subtitle": "BTC Block Prediction",
+    "description": "Predict Bitcoin transactions in real time. Compete with others and win each round!",
     "primaryCategory": "social",
-    "tags": ["bitcoin", "blockchain", "prediction", "game"],
+    "tags": ["blockchain", "bitcoin", "prediction", "game", "realtime"],
     "heroImageUrl": "https://testtx.netlify.app/hero.png",
     "ogTitle": "TX Battle Royale",
-    "ogDescription": "Predict Bitcoin transactions on Farcaster. Guess block txs and climb the leaderboard!",
+    "ogDescription": "Real-time Bitcoin block prediction battle. Guess transactions and climb the leaderboard!",
     "ogImageUrl": "https://testtx.netlify.app/og.png",
     "button": {
       "title": "Join Battle",
-      "action": { "type": "launch" }
+      "action": {
+        "type": "launch"
+      }
     },
     "permissions": ["user:read"],
     "features": ["real-time-updates", "multiplayer", "leaderboard", "chat"],
@@ -41,7 +41,6 @@
     },
     "social": {
       "twitter": "@txbattleroyale",
-      "github": "https://github.com/arukh89/Test-tx",
       "website": "https://testtx.netlify.app"
     },
     "gameplay": {
@@ -61,7 +60,7 @@
       "supportedLanguages": ["en"]
     },
     "version_info": {
-      "release_date": "2025-09-20",
+      "release_date": "2024-09-20",
       "changelog": "https://testtx.netlify.app/changelog",
       "min_app_version": "1.0.0"
     }

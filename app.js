@@ -13,9 +13,12 @@ async function initializeFarcasterSDK() {
 
     currentUser = await sdk.user.getCurrent();
     if (currentUser) {
-      document.getElementById("userInfo").style.display = "block";
-      document.getElementById("userName").textContent = currentUser.username;
-      document.getElementById("userFid").textContent = currentUser.fid;
+      const userInfo = document.getElementById("userInfo");
+      if (userInfo) userInfo.style.display = "block";
+      const userName = document.getElementById("userName");
+      if (userName) userName.textContent = currentUser.username;
+      const userFid = document.getElementById("userFid");
+      if (userFid) userFid.textContent = currentUser.fid;
     }
 
     connectToBitcoinNetwork();
@@ -31,8 +34,10 @@ function connectToBitcoinNetwork() {
     fetchCurrentBlock();
     setInterval(fetchCurrentBlock, 30000); // refresh every 30s
     setInterval(updateTimeAgo, 1000); // refresh "time ago" every second
-    document.querySelector(".container").classList.remove("hidden");
+
+    // hide loading and show app container
     document.getElementById("loadingScreen")?.classList.add("hidden");
+    document.getElementById("app")?.classList.remove("hidden");
   } catch (err) {
     console.error("⚠️ Bitcoin connection error:", err);
     showError("Failed to connect to Bitcoin network");
@@ -44,11 +49,6 @@ async function fetchCurrentBlock() {
     const response = await fetch("https://mempool.space/api/blocks");
     const blocks = await response.json();
     currentBlock = blocks[0];
-
-    document.getElementById("currentBlockHeight").textContent =
-      currentBlock.height;
-    document.getElementById("estimatedTxCount").textContent =
-      currentBlock.tx_count || "N/A";
 
     // ✅ Update live ticker
     updateStatusTicker(currentBlock);
@@ -112,6 +112,7 @@ document
 
 function updatePlayersList() {
   const list = document.getElementById("playersList");
+  if (!list) return;
   list.innerHTML = "";
 
   list.classList.remove("skeleton");
@@ -122,7 +123,8 @@ function updatePlayersList() {
     list.appendChild(li);
   });
 
-  document.getElementById("playersCount").textContent = players.length;
+  const countEl = document.getElementById("playersCount");
+  if (countEl) countEl.textContent = players.length;
 }
 
 /* === Remove Skeleton Utility === */
@@ -136,13 +138,17 @@ function removeLeaderboardSkeleton() {
 /* === Chat === */
 document.getElementById("sendMessage")?.addEventListener("click", () => {
   const input = document.getElementById("chatInput");
+  if (!input) return;
   const msg = input.value.trim();
   if (!msg) return;
+
   const chatBox = document.getElementById("chatMessages");
-  const div = document.createElement("div");
-  div.textContent = `${currentUser?.username || "Anon"}: ${msg}`;
-  chatBox.appendChild(div);
-  chatBox.scrollTop = chatBox.scrollHeight;
+  if (chatBox) {
+    const div = document.createElement("div");
+    div.textContent = `${currentUser?.username || "Anon"}: ${msg}`;
+    chatBox.appendChild(div);
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
   input.value = "";
 });
 
@@ -176,13 +182,37 @@ function shareWin() {
 /* === Error Handling === */
 function showError(msg) {
   document.getElementById("loadingScreen")?.classList.add("hidden");
-  document.querySelector(".container")?.classList.add("hidden");
+  document.getElementById("app")?.classList.add("hidden");
   const err = document.getElementById("errorScreen");
   if (err) {
     document.getElementById("errorMessage").textContent = msg;
     err.classList.remove("hidden");
   }
 }
+
+/* === Join Battle Button === */
+document.getElementById("joinButton")?.addEventListener("click", () => {
+  console.log("🚀 Join Battle clicked!");
+
+  // 1️⃣ Show game UI
+  const gameUI = document.getElementById("gameUI");
+  if (gameUI) {
+    gameUI.classList.remove("hidden");
+    gameUI.scrollIntoView({ behavior: "smooth" });
+  }
+
+  // 2️⃣ Try launching Farcaster Miniapp (if inside Warpcast)
+  try {
+    if (sdk?.launch) {
+      sdk.launch();
+      console.log("✅ Farcaster miniapp launch triggered");
+    } else {
+      console.log("ℹ️ Not inside Farcaster (skipping sdk.launch)");
+    }
+  } catch (err) {
+    console.error("❌ Join Battle launch failed:", err);
+  }
+});
 
 /* === Start App === */
 window.addEventListener("load", () => {

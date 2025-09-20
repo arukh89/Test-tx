@@ -1,92 +1,102 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Generate Placeholder Images</title>
-    <style>
-        body {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f0f0f0;
-        }
-        .image-container {
-            margin: 20px;
-        }
-        .placeholder-image {
-            width: 1200px;
-            height: 630px;
-            background: linear-gradient(45deg, #1a1a4a, #4a1a66);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: Arial, sans-serif;
-            font-size: 24px;
-            text-align: center;
-            border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-        }
-    </style>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>TX Battle Royale</title>
+  <meta name="fc:miniapp" content='{"version":"1","imageUrl":"https://testtx.netlify.app/splash.png","button":{"title":"Join Battle","action":{"type":"launch_miniapp","name":"TX Battle Royale","url":"https://testtx.netlify.app/index.html","splashImageUrl":"https://testtx.netlify.app/splash.png","splashBackgroundColor":"#1a1a4a"}}'>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="image-container">
-        <!-- Placeholder for hero.png -->
-        <div class="placeholder-image" id="heroImage">
-            HERO IMAGE PLACEHOLDER
-        </div>
-        <!-- Placeholder for og.png -->
-        <div class="placeholder-image" id="ogImage">
-            OG IMAGE PLACEHOLDER
-        </div>
+  <!-- Loading Screen -->
+  <div id="loadingScreen" class="loading-screen">
+    <div class="loading-spinner"></div>
+  </div>
+
+  <!-- Wallet Connection Button -->
+  <button id="connectWalletBtn" style="position: fixed; top: 10px; right: 10px; z-index: 1000; padding: 8px 12px; font-size: 0.9rem; display: none;" onclick="connectWallet()">Connect Wallet</button>
+
+  <div class="container">
+    <header>
+      <h1>$Seconds Bitcoin TX Battle Royale</h1>
+      <h2>Real-time blockchain competition with miggles.eth</h2>
+    </header>
+
+    <div class="objective">
+      <h3>🎯 Objective: Predict the number of transactions in Bitcoin blocks</h3>
+      <p>Comment your guess below and the closest answer wins.</p>
     </div>
-    <script>
-        // JavaScript to generate placeholder images
-        function generatePlaceholder(elementId, text) {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            const imageContainer = document.getElementById(elementId);
-            
-            // Set canvas size
-            canvas.width = 1200;
-            canvas.height = 630;
-            
-            // Create gradient
-            const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-            gradient.addColorStop(0, '#1a1a4a');
-            gradient.addColorStop(1, '#4a1a66');
-            
-            // Fill background
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // Add text
-            ctx.font = 'bold 36px Arial';
-            ctx.fillStyle = 'white';
-            ctx.textAlign = 'center';
-            ctx.fillText(text, canvas.width / 2, canvas.height / 2);
-            
-            // Convert canvas to PNG
-            const pngData = canvas.toDataURL('image/png');
-            
-            // Replace placeholder with generated image
-            const img = document.createElement('img');
-            img.src = pngData;
-            img.style.width = '100%';
-            img.style.height = 'auto';
-            img.style.borderRadius = '8px';
-            img.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.3)';
-            
-            imageContainer.replaceWith(img);
-        }
-        
-        // Generate placeholders
-        window.onload = function() {
-            generatePlaceholder('heroImage', 'BITCOIN FARCASTER BATTLE');
-            generatePlaceholder('ogImage', 'Join the Bitcoin TX Battle Royale on Farcaster!');
-        };
-    </script>
+
+    <p class="mempool-tip">
+      Visit <a href="https://mempool.space" target="_blank" style="color: #f7931a">mempool.space</a> to see current projected transactions to help with your guess.<br>
+      Strictly only one guess per player.
+    </p>
+
+    <div class="players-section">
+      <div>Farcaster Participants <span id="fids">(0 FIDs)</span></div>
+      <p>Waiting for Farcaster users to join...</p>
+      <p>Waiting for players to join...</p>
+    </div>
+
+    <div class="guess-form">
+      <input id="guessInp" type="number" placeholder="Your guess">
+      <button id="lockBtn" onclick="lockGuess()">Join Battle</button>
+    </div>
+
+    <div id="winnerBanner"></div>
+    <div id="status">Connecting to mempool.space...</div>
+    <ul id="playersList"></ul>
+
+    <!-- Chat Feature -->
+    <div class="chat-container">
+      <h3>Chat</h3>
+      <div id="chatMessages" class="chat-messages"></div>
+      <div class="chat-input">
+        <input type="text" id="chatInput" placeholder="Type a message...">
+        <button onclick="sendMessage()">Send</button>
+      </div>
+    </div>
+
+    <!-- Block Explorer -->
+    <div class="block-explorer">
+      <h3>Block Explorer</h3>
+      <div class="block-buttons">
+        <button id="fetchPreviousBtn" onclick="fetchPreviousBlock()">Previous Block</button>
+        <button id="fetchCurrentBtn" onclick="fetchCurrentBlock()">Current Block</button>
+        <button id="fetchNextBtn" onclick="fetchNextBlock()">Next Block</button>
+      </div>
+      <div id="blockData"></div>
+    </div>
+
+    <!-- Social Sharing -->
+    <div class="social-sharing">
+      <button onclick="shareWin()">Share Win</button>
+      <button onclick="shareGame()">Share Game</button>
+    </div>
+
+    <div class="player-stats">
+      <div class="stat-card">
+        <h4>Players</h4>
+        <p id="playersCount">0</p>
+      </div>
+      <div class="stat-card">
+        <h4>Battles Won</h4>
+        <p id="battlesWon">0</p>
+      </div>
+      <div class="stat-card">
+        <h4>Total Battles</h4>
+        <p id="totalBattles">0</p>
+      </div>
+      <div class="stat-card">
+        <h4>Win Rate</h4>
+        <p id="winRate">0%</p>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk';
+  </script>
+  <script src="app.js"></script>
 </body>
 </html>

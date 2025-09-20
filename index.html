@@ -5,90 +5,53 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TX Battle Royale</title>
 
-  <!-- Manifest -->
-  <link rel="manifest" href="/.well-known/farcaster.json" />
+  <!-- Open Graph Metadata (Warpcast preview card) -->
+  <meta property="og:title" content="TX Battle Royale" />
+  <meta property="og:description" content="Predict Bitcoin transactions in real time. Compete and climb the leaderboard!" />
+  <meta property="og:image" content="https://testtx.netlify.app/og.png" />
+  <meta property="og:url" content="https://testtx.netlify.app/" />
+  <meta property="og:type" content="website" />
 
-  <!-- Favicon & Icons -->
-  <link rel="icon" type="image/png" href="/icons/icon-192.png" />
+  <!-- Farcaster Miniapp Frame Metadata -->
+  <meta name="fc:frame" content="vNext" />
+  <meta name="fc:frame:image" content="https://testtx.netlify.app/og.png" />
+  <meta name="fc:frame:button:1" content="Join Battle" />
+  <meta name="fc:frame:button:1:action" content="launch" />
+  <meta name="fc:frame:post_url" content="https://testtx.netlify.app/" />
 
-  <!-- Styles -->
+  <!-- Stylesheet -->
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- Loading Screen -->
-  <div id="loadingScreen" class="loading-screen">
-    <h2>Loading TX Battle Royale...</h2>
-  </div>
-
-  <!-- Error Screen -->
-  <div id="errorScreen" class="error-screen hidden">
-    <h2>Something went wrong 😢</h2>
-    <p id="errorMessage"></p>
-  </div>
-
-  <!-- Main App -->
-  <div class="container hidden">
+  <div id="app" class="container">
     <header>
       <h1>TX Battle Royale ⚡</h1>
-      <div id="userInfo" style="display:none;">
-        Logged in as <strong id="userName"></strong> (FID: <span id="userFid"></span>)
-      </div>
+      <p class="subtitle">Bitcoin Block Prediction Game</p>
     </header>
 
-    <!-- Game Status -->
-    <section class="stats">
-      <p>Round: <span id="roundNumber">1</span></p>
-      <p>Players: <span id="playersCount">0</span></p>
-      <p>Wins: <span id="userWins">0</span></p>
-      <p>Streak: <span id="winStreak">0</span></p>
-    </section>
+    <main>
+      <section class="intro">
+        <p>
+          Guess the number of transactions in the next Bitcoin block.
+          The closest prediction wins. Join the battle and climb the leaderboard!
+        </p>
+        <button id="joinButton" class="cta">Join Battle</button>
+      </section>
 
-    <!-- Prediction Form -->
-    <section class="prediction-form">
-      <input id="predictionInput" type="number" placeholder="Enter your guess (1-10000)" />
-      <button id="submitPrediction">Submit Prediction 🚀</button>
-    </section>
+      <section id="status" class="status"></section>
 
-    <!-- Winner Announcement -->
-    <section id="winnerAnnouncement" class="winner hidden"></section>
+      <section id="leaderboard" class="leaderboard">
+        <h2>Leaderboard</h2>
+        <ul id="leaderboardList"></ul>
+      </section>
+    </main>
 
-    <!-- Players List -->
-    <section class="players">
-      <h3>Players</h3>
-      <ul id="playersList"></ul>
-    </section>
-
-    <!-- Chat -->
-    <section class="chat">
-      <h3>Chat</h3>
-      <div id="chatMessages" class="chat-messages"></div>
-      <input id="chatInput" type="text" placeholder="Type a message..." />
-      <button id="sendMessage">Send</button>
-    </section>
-
-    <!-- Block Explorer -->
-    <section class="block-explorer">
-      <h3>Bitcoin Block Info</h3>
-      <p>Height: <span id="currentBlockHeight">-</span></p>
-      <p>Estimated Tx: <span id="estimatedTxCount">-</span></p>
-      <div class="block-buttons">
-        <button onclick="fetchPreviousBlock()">⬅️ Previous Block</button>
-        <button onclick="fetchCurrentBlock()">🔄 Current Block</button>
-        <button onclick="fetchNextBlock()">➡️ Next Block</button>
-      </div>
-    </section>
-
-    <!-- Share -->
-    <section class="share">
-      <button onclick="shareGame()">Share Game 🎮</button>
-      <button onclick="shareWin()">Share Win 🏆</button>
-    </section>
+    <footer>
+      <p>Powered by <a href="https://farcaster.xyz" target="_blank">Farcaster</a> &amp; <a href="https://mempool.space" target="_blank">Mempool.space</a></p>
+    </footer>
   </div>
 
-  <!-- Farcaster Miniapp SDK -->
-  <script src="https://unpkg.com/@farcaster/miniapp-sdk/dist/browser.js"></script>
-
   <!-- App Logic -->
-  <script src="app.js"></script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>

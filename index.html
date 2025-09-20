@@ -5,50 +5,40 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TX Battle Royale</title>
 
-  <!-- Open Graph Metadata (for previews) -->
   <meta property="og:title" content="TX Battle Royale" />
   <meta property="og:description" content="Predict Bitcoin transactions in real time. Compete and climb the leaderboard!" />
   <meta property="og:image" content="https://testtx.netlify.app/og.png" />
   <meta property="og:url" content="https://testtx.netlify.app/" />
   <meta property="og:type" content="website" />
 
-  <!-- Farcaster Mini App Metadata (2025 spec) -->
   <meta name="fc:miniapp"
         content='{
           "version": "1",
           "name": "TX Battle Royale",
           "url": "https://testtx.netlify.app/",
           "iconUrl": "https://testtx.netlify.app/icons/icon-192.png",
-          "splashImageUrl": "https://testtx.netlify.app/splash.png",
-          "splashBackgroundColor": "#1a1a4a",
           "subtitle": "BTC Block Prediction",
           "description": "Predict Bitcoin transactions in real time. Compete with others and win each round!",
-          "heroImageUrl": "https://testtx.netlify.app/hero.png",
-          "ogImageUrl": "https://testtx.netlify.app/og.png",
           "button": {
             "title": "Join Battle",
             "action": { "type": "launch" }
           }
         }' />
 
-  <!-- Stylesheet -->
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- Loading Screen -->
   <div id="loadingScreen" class="container">
     <h2>⏳ Loading TX Battle Royale...</h2>
     <p>Please wait while we connect to the Bitcoin network.</p>
   </div>
 
-  <!-- Error Screen -->
   <div id="errorScreen" class="container hidden">
     <h2>❌ Something went wrong</h2>
     <p id="errorMessage">Failed to load the app.</p>
     <button onclick="window.location.reload()" class="cta">Retry</button>
   </div>
 
-  <!-- Main App -->
   <div id="app" class="container hidden">
     <header>
       <h1>TX Battle Royale ⚡</h1>
@@ -56,7 +46,6 @@
     </header>
 
     <main>
-      <!-- Intro Section -->
       <section class="intro">
         <p>
           Guess the number of transactions in the next Bitcoin block.
@@ -65,7 +54,6 @@
         <button id="joinButton" class="cta">Join Battle</button>
       </section>
 
-      <!-- Game UI (hidden until Join Battle clicked) -->
       <section id="gameUI" class="hidden">
         <section id="status" class="status">
           Waiting for the next Bitcoin block ⛓️...
@@ -104,7 +92,6 @@
     </footer>
   </div>
 
-  <!-- App Logic -->
   <script type="module" src="app.js"></script>
 </body>
 </html>

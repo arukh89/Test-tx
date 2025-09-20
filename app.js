@@ -10,9 +10,10 @@ let winStreak = 0;
 let userWins = 0;
 let players = [];
 
+/* === SDK Initialization === */
 async function initializeFarcasterSDK() {
   try {
-    await sdk.init(); // ✅ New init (fixes undefined actions)
+    await sdk.init(); // ✅ fixed init
     console.log("✅ Farcaster Miniapp initialized");
 
     currentUser = await sdk.user.getCurrent();
@@ -30,6 +31,7 @@ async function initializeFarcasterSDK() {
   }
 }
 
+/* === Bitcoin Data Fetch === */
 function connectToBitcoinNetwork() {
   try {
     fetchCurrentBlock();
@@ -101,10 +103,10 @@ async function fetchNextBlock() {
   }
 }
 
-// Prediction submission
+/* === Predictions === */
 document
   .getElementById("submitPrediction")
-  .addEventListener("click", () => {
+  ?.addEventListener("click", () => {
     const input = document.getElementById("predictionInput");
     const guess = parseInt(input.value);
     if (isNaN(guess) || guess <= 0) {
@@ -119,16 +121,21 @@ document
 function updatePlayersList() {
   const list = document.getElementById("playersList");
   list.innerHTML = "";
+
+  // Remove skeleton shimmer when real data is added
+  list.classList.remove("skeleton");
+
   players.forEach((p) => {
     const li = document.createElement("li");
     li.textContent = `FID ${p.fid}: ${p.guess}`;
     list.appendChild(li);
   });
+
   document.getElementById("playersCount").textContent = players.length;
 }
 
-// Chat
-document.getElementById("sendMessage").addEventListener("click", () => {
+/* === Chat === */
+document.getElementById("sendMessage")?.addEventListener("click", () => {
   const input = document.getElementById("chatInput");
   const msg = input.value.trim();
   if (!msg) return;
@@ -140,7 +147,7 @@ document.getElementById("sendMessage").addEventListener("click", () => {
   input.value = "";
 });
 
-// Social sharing
+/* === Social Sharing === */
 function shareGame() {
   try {
     sdk.share({
@@ -167,17 +174,18 @@ function shareWin() {
   }
 }
 
-// Error display
+/* === Error Handling === */
 function showError(msg) {
-  document.getElementById("loadingScreen").classList.add("hidden");
-  document.querySelector(".container").classList.add("hidden");
+  document.getElementById("loadingScreen")?.classList.add("hidden");
+  document.querySelector(".container")?.classList.add("hidden");
   const err = document.getElementById("errorScreen");
-  document.getElementById("errorMessage").textContent = msg;
-  err.classList.remove("hidden");
+  if (err) {
+    document.getElementById("errorMessage").textContent = msg;
+    err.classList.remove("hidden");
+  }
 }
 
-// Start app
+/* === Start App === */
 window.addEventListener("load", () => {
   initializeFarcasterSDK();
 });
-                   

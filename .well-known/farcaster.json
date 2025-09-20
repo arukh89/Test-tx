@@ -1,0 +1,31 @@
+{
+  "accountAssociation": {
+    "header": "eyJmaWQiOjI1MDcwNCwidHlwZSI6ImF1dGgiLCJrZXkiOiIweDA5RDAyRDI1RDBEMDgyZjdGMkUwNGI0ODM4Y0VmZTI3MWIyZGFCMDkifQ",
+    "payload": "eyJkb21haW4iOiJ0ZXN0dHgubmV0bGlmeS5hcHAifQ",
+    "signature": "ym/CQ90fZcYVU/jl2t967FR6iIjemU61zGiuGoG9Gr0IUal/uNH+5UcGOWox0H//9+WSoKQlX5WH8UcBANu1sBw="
+  },
+  "miniapp": {
+    "version": "1",
+    "name": "TX Battle Royale",
+    "iconUrl": "https://testtx.netlify.app/icons/icon-192.png",
+    "splashImageUrl": "https://testtx.netlify.app/splash.png",
+    "splashBackgroundColor": "#1a1a4a",
+    "homeUrl": "https://testtx.netlify.app/index.html",
+    "subtitle": "Predict BTC transactions and win",
+    "description": "Real-time Bitcoin block transaction prediction game. Guess the number of transactions in the next block and compete with other players for glory!",
+    "primaryCategory": "social",
+    "tags": ["blockchain", "games", "bitcoin", "prediction"],
+    "heroImageUrl": "https://testtx.netlify.app/hero.png",
+    "ogTitle": "TX Battle Royale - Bitcoin Prediction Game",
+    "ogDescription": "Join the ultimate Bitcoin transaction prediction battle! Guess block transactions and win against other players in real-time.",
+    "ogImageUrl": "https://testtx.netlify.app/og.png",
+    "buttonTitle": "Join Battle",
+    "permissions": ["user:read"],
+    "metadata": {
+      "gameType": "prediction",
+      "blockchain": "bitcoin",
+      "realTime": true,
+      "competitive": true
+    }
+  }
+}

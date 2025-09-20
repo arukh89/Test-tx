@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>TX Battle Royale</title>
+  
+  <!-- Farcaster miniapp meta tag - CORRECTED FORMAT -->
+  <meta name="fc:miniapp" content='{"version":"1","imageUrl":"https://testtx.netlify.app/og.png","button":{"title":"Join Battle","action":{"type":"launch_frame","name":"TX Battle Royale","url":"https://testtx.netlify.app/index.html","splashImageUrl":"https://testtx.netlify.app/splash.png","splashBackgroundColor":"#1a1a4a"}}}'>
+  
+  <!-- Open Graph tags -->
+  <meta property="og:title" content="TX Battle Royale">
+  <meta property="og:description" content="Predict Bitcoin block transactions and win rewards">
+  <meta property="og:image" content="https://testtx.netlify.app/og.png">
+  <meta property="og:url" content="https://testtx.netlify.app">
+  <meta property="og:type" content="website">
+  
+  <!-- Favicon -->
+  <link rel="icon" href="https://testtx.netlify.app/favicon.ico">
+  <link rel="apple-touch-icon" href="https://testtx.netlify.app/icons/icon-192.png">
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Loading Screen -->
+  <div id="loadingScreen" class="loading-screen">
+    <div class="loading-content">
+      <div class="loading-spinner"></div>
+      <h3>TX Battle Royale</h3>
+      <p>Connecting to Farcaster...</p>
+      <div class="loading-dots">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error Screen -->
+  <div id="errorScreen" class="error-screen hidden">
+    <div class="error-content">
+      <h3>⚠️ Connection Error</h3>
+      <p id="errorMessage">Failed to connect to Farcaster. Please refresh the page.</p>
+      <button onclick="location.reload()" class="error-btn">🔄 Refresh</button>
+      <button onclick="continueAnonymous()" class="error-btn secondary">Continue Anonymous</button>
+    </div>
+  </div>
+
+  <!-- Main App Container -->
+  <div class="container">
+    <!-- Header Section -->
+    <header>
+      <div class="logo">
+        <h1>⚡ TX Battle Royale</h1>
+        <h2>Real-time Bitcoin transaction prediction battle</h2>
+      </div>
+      
+      <!-- User Info Display -->
+      <div class="user-info" id="userInfo" style="display: none;">
+        <div class="user-avatar">👤</div>
+        <div class="user-details">
+          <span class="user-name" id="userName">Loading...</span>
+          <span class="user-fid">FID: <span id="userFid">0</span></span>
+        </div>
+        <div class="connection-status connected">🟢 Connected</div>
+      </div>
+    </header>
+
+    <!-- Game Objective -->
+    <section class="objective-section">
+      <div class="objective">
+        <h3>🎯 Game Objective</h3>
+        <p>Predict the number of transactions in the next Bitcoin block. Closest guess wins!</p>
+        <div class="game-tip">
+          <strong>💡 Pro Tip:</strong> Visit <a href="https://mempool.space" target="_blank">mempool.space</a> 
+          to check current mempool status and make informed predictions.
+        </div>
+      </div>
+    </section>
+
+    <!-- Game Status Section -->
+    <section class="game-status">
+      <div class="status-grid">
+        <div class="status-card">
+          <div class="status-icon">🏁</div>
+          <div class="status-info">
+            <span class="status-label">Round</span>
+            <span class="status-value" id="roundNumber">1</span>
+          </div>
+        </div>
+        <div class="status-card">
+          <div class="status-icon">👥</div>
+          <div class="status-info">
+            <span class="status-label">Players</span>
+            <span class="status-value" id="playersCount">0</span>
+          </div>
+        </div>
+        <div class="status-card">
+          <div class="status-icon">🎯</div>
+          <div class="status-info">
+            <span class="status-label">Your Wins</span>
+            <span class="status-value" id="userWins">0</span>
+          </div>
+        </div>
+        <div class="status-card">
+          <div class="status-icon">🔥</div>
+          <div class="status-info">
+            <span class="status-label">Streak</span>
+            <span class="status-value" id="winStreak">0</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Current Block Info -->
+      <div class="block-info">
+        <div class="block-detail">
+          <span>Current Block:</span>
+          <strong id="currentBlockHeight">Loading...</strong>
+        </div>
+        <div class="block-detail">
+          <span>Est. Next Block TXs:</span>
+          <strong id="estimatedTxCount">~</strong>
+        </div>
+      </div>
+    </section>
+
+    <!-- Prediction Form -->
+    <section class="prediction-section">
+      <div class="prediction-form">
+        <div class="form-header">
+          <h3>🎲 Make Your Prediction</h3>
+          <p>How many transactions will be in the next Bitcoin block?</p>
+        </div>
+        
+        <div class="input-group">
+          <input 
+            type="number" 
+            id="predictionInput" 
+            placeholder="Enter your prediction (e.g. 3500)"
+            min="1" 
+            max="10000"
+            class="prediction-input"
+          >
+          <button id="submitPrediction" onclick="submitPrediction()" class="submit-btn">
+            <span class="btn-text">Submit Prediction</span>
+            <span class="btn-icon">🚀</span>
+          </button>
+        </div>
+        
+        <div class="prediction-help">
+          <small>💡 Typical Bitcoin blocks contain 2,000-4,000 transactions</small>
+        </div>
+      </div>
+    </section>
+
+    <!-- Game Status Display -->
+    <section class="status-display">
+      <div id="gameStatus" class="game-status-text">
+        🔄 Connecting to Bitcoin network...
+      </div>
+      
+      <div id="winnerAnnouncement" class="winner-announcement hidden">
+        <!-- Winner will be displayed here -->
+      </div>
+    </section>
+
+    <!-- Players List -->
+    <section class="players-section">
+      <div class="section-header">
+        <h3>👥 Battle Participants</h3>
+        <span class="participant-count" id="participantCount">0 players</span>
+      </div>
+      
+      <div class="players-container">
+        <ul id="playersList" class="players-list">
+          <!-- Players will be dynamically added here -->
+        </ul>
+        
+        <div class="empty-players" id="emptyPlayers">
+          <div class="empty-state">
+            <p>🎯 No predictions yet</p>
+            <p>Be the first to make a prediction!</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Chat Section -->
+    <section class="chat-section">
+      <div class="section-header">
+        <h3>💬 Battle Chat</h3>
+        <span class="chat-status">Real-time updates</span>
+      </div>
+      
+      <div class="chat-container">
+        <div id="chatMessages" class="chat-messages">
+          <!-- Chat messages will appear here -->
+        </div>
+        
+        <div class="chat-input-container">
+          <input 
+            type="text" 
+            id="chatInput" 
+            placeholder="Type your message..."
+            maxlength="200"
+            class="chat-input"
+          >
+          <button id="sendMessage" onclick="sendChatMessage()" class="send-btn">
+            📤
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Block Explorer -->
+    <section class="block-explorer-section">
+      <div class="section-header">
+        <h3>🔍 Block Explorer</h3>
+        <span class="explorer-status">Live Bitcoin data</span>
+      </div>
+      
+      <div class="block-explorer">
+        <div class="explorer-controls">
+          <button onclick="fetchPreviousBlock()" class="explorer-btn">Previous Block</button>
+          <button onclick="fetchCurrentBlock()" class="explorer-btn primary">Current Block</button>
+          <button onclick="fetchNextBlock()" class="explorer-btn">Next Block</button>
+        </div>
+        
+        <div id="blockExplorerData" class="block-data">
+          <div class="block-placeholder">
+            <p>🔍 Click a button above to explore Bitcoin blocks</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Social Sharing -->
+    <section class="social-section">
+      <div class="section-header">
+        <h3>🚀 Share the Battle</h3>
+      </div>
+      
+      <div class="social-buttons">
+        <button onclick="shareWin()" class="social-btn win-share" id="shareWinBtn" style="display: none;">
+          🏆 Share Win
+        </button>
+        <button onclick="shareGame()" class="social-btn">
+          🎯 Share Game
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <!-- Load Farcaster SDK -->
+  <script type="module" src="https://unpkg.com/@farcaster/miniapp-sdk@latest/dist/index.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

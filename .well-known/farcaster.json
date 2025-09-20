@@ -2,7 +2,7 @@
   "accountAssociation": {
     "header": "eyJmaWQiOjI1MDcwNCwidHlwZSI6ImF1dGgiLCJrZXkiOiIweDA5RDAyRDI1RDBEMDgyZjdGMkUwNGI0ODM4Y0VmZTI3MWIyZGFCMDkifQ",
     "payload": "eyJkb21haW4iOiJ0ZXN0dHgubmV0bGlmeS5hcHAifQ",
-    "signature": "ym/CQ90fZcYVU/jl2t967FR6iIjemU61zGiuGoG9Gr0IUal/uNH+5UcGOWox0H//9+WSoKQlX5WH8UcBANu1sBw="
+    "signature": "ym/CQ90fZcYVU/jl2t967FR6iIjemU61zGiuGoG9Gr0IUal/uNH+5UcGOWox0H//9+WSoKQlX5WH8UcGOWox0H//9+WSoKQlX5WH8UcBANu1sBw="
   },
   "miniapp": {
     "version": "1",
@@ -11,21 +11,65 @@
     "splashImageUrl": "https://testtx.netlify.app/splash.png",
     "splashBackgroundColor": "#1a1a4a",
     "homeUrl": "https://testtx.netlify.app/index.html",
-    "subtitle": "Predict BTC transactions and win",
-    "description": "Real-time Bitcoin block transaction prediction game. Guess the number of transactions in the next block and compete with other players for glory!",
+    "subtitle": "Bitcoin Transaction Prediction Game",
+    "description": "Join the ultimate real-time Bitcoin block transaction prediction battle! Compete with other Farcaster users to guess the exact number of transactions in upcoming Bitcoin blocks. The closest prediction wins each round!",
     "primaryCategory": "social",
-    "tags": ["blockchain", "games", "bitcoin", "prediction"],
+    "tags": ["blockchain", "bitcoin", "prediction", "game", "competition", "realtime"],
     "heroImageUrl": "https://testtx.netlify.app/hero.png",
     "ogTitle": "TX Battle Royale - Bitcoin Prediction Game",
-    "ogDescription": "Join the ultimate Bitcoin transaction prediction battle! Guess block transactions and win against other players in real-time.",
+    "ogDescription": "Real-time Bitcoin transaction prediction battle on Farcaster. Guess block transactions, compete with friends, and climb the leaderboard!",
     "ogImageUrl": "https://testtx.netlify.app/og.png",
-    "buttonTitle": "Join Battle",
-    "permissions": ["user:read"],
-    "metadata": {
-      "gameType": "prediction",
+    "button": {
+      "title": "Join Battle",
+      "action": {
+        "type": "launch"
+      }
+    },
+    "permissions": [
+      "user:read"
+    ],
+    "features": [
+      "real-time-updates",
+      "multiplayer",
+      "leaderboard",
+      "chat"
+    ],
+    "author": {
+      "name": "TX Battle Team",
+      "url": "https://testtx.netlify.app"
+    },
+    "support": {
+      "email": "support@testtx.netlify.app",
+      "url": "https://testtx.netlify.app/help"
+    },
+    "privacy": {
+      "policy": "https://testtx.netlify.app/privacy",
+      "dataCollection": "minimal"
+    },
+    "social": {
+      "twitter": "@txbattleroyale",
+      "website": "https://testtx.netlify.app"
+    },
+    "gameplay": {
+      "type": "prediction",
+      "rounds": "continuous",
+      "difficulty": "dynamic",
+      "rewards": "bragging-rights"
+    },
+    "technical": {
       "blockchain": "bitcoin",
-      "realTime": true,
-      "competitive": true
+      "dataSource": "mempool.space",
+      "updateFrequency": "real-time",
+      "compatibility": "all-devices"
+    },
+    "localization": {
+      "defaultLanguage": "en",
+      "supportedLanguages": ["en"]
+    },
+    "version_info": {
+      "release_date": "2024-09-20",
+      "changelog": "https://testtx.netlify.app/changelog",
+      "min_app_version": "1.0.0"
     }
   }
 }

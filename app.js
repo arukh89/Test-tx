@@ -1,19 +1,14 @@
 // app.js
-// Farcaster Miniapp SDK is loaded globally via CDN in index.html
-// <script src="https://unpkg.com/@farcaster/miniapp-sdk/dist/browser.js"></script>
-
 const sdk = window.farcaster;
 let currentUser = null;
 let currentBlock = null;
-let roundNumber = 1;
-let winStreak = 0;
-let userWins = 0;
 let players = [];
+let lastUpdateTime = null; // track block fetch timestamp
 
 /* === SDK Initialization === */
 async function initializeFarcasterSDK() {
   try {
-    await sdk.init(); // ✅ fixed init
+    await sdk.init();
     console.log("✅ Farcaster Miniapp initialized");
 
     currentUser = await sdk.user.getCurrent();
@@ -23,7 +18,6 @@ async function initializeFarcasterSDK() {
       document.getElementById("userFid").textContent = currentUser.fid;
     }
 
-    // Start game once SDK is ready
     connectToBitcoinNetwork();
   } catch (err) {
     console.error("❌ SDK Init failed:", err);
@@ -36,8 +30,9 @@ function connectToBitcoinNetwork() {
   try {
     fetchCurrentBlock();
     setInterval(fetchCurrentBlock, 30000); // refresh every 30s
+    setInterval(updateTimeAgo, 1000); // refresh "time ago" every second
     document.querySelector(".container").classList.remove("hidden");
-    document.getElementById("loadingScreen").classList.add("hidden");
+    document.getElementById("loadingScreen")?.classList.add("hidden");
   } catch (err) {
     console.error("⚠️ Bitcoin connection error:", err);
     showError("Failed to connect to Bitcoin network");
@@ -49,57 +44,54 @@ async function fetchCurrentBlock() {
     const response = await fetch("https://mempool.space/api/blocks");
     const blocks = await response.json();
     currentBlock = blocks[0];
+
     document.getElementById("currentBlockHeight").textContent =
       currentBlock.height;
     document.getElementById("estimatedTxCount").textContent =
       currentBlock.tx_count || "N/A";
+
+    // ✅ Update live ticker
+    updateStatusTicker(currentBlock);
+
+    // ✅ Remove skeleton shimmer
+    removeLeaderboardSkeleton();
+
+    // ✅ Track update time
+    lastUpdateTime = Date.now();
+
   } catch (err) {
     console.error("⚠️ Block fetch error:", err);
     showError("Error fetching current block");
   }
 }
 
-async function fetchPreviousBlock() {
-  try {
-    if (!currentBlock) return;
-    const response = await fetch(
-      `https://mempool.space/api/block-height/${currentBlock.height - 1}`
-    );
-    const prevBlockHash = await response.text();
-    const prevResponse = await fetch(
-      `https://mempool.space/api/block/${prevBlockHash}`
-    );
-    const prevBlock = await prevResponse.json();
-
-    document.getElementById("currentBlockHeight").textContent =
-      prevBlock.height;
-    document.getElementById("estimatedTxCount").textContent =
-      prevBlock.tx_count || "N/A";
-  } catch (err) {
-    console.error("⚠️ Prev block error:", err);
-    showError("Error fetching previous block");
+/* === Status Ticker === */
+function updateStatusTicker(block) {
+  const statusEl = document.getElementById("status");
+  if (statusEl && block) {
+    statusEl.innerHTML = `
+      📦 Live Block: ${block.height} | ${block.tx_count} TXs
+      <div id="timeAgo" style="font-size:0.9rem; color:#aaa; margin-top:4px;">
+        updated just now
+      </div>
+    `;
   }
 }
 
-async function fetchNextBlock() {
-  try {
-    if (!currentBlock) return;
-    const response = await fetch(
-      `https://mempool.space/api/block-height/${currentBlock.height + 1}`
-    );
-    const nextBlockHash = await response.text();
-    const nextResponse = await fetch(
-      `https://mempool.space/api/block/${nextBlockHash}`
-    );
-    const nextBlock = await nextResponse.json();
+/* === "Last updated X seconds ago" updater === */
+function updateTimeAgo() {
+  if (!lastUpdateTime) return;
+  const timeAgoEl = document.getElementById("timeAgo");
+  if (!timeAgoEl) return;
 
-    document.getElementById("currentBlockHeight").textContent =
-      nextBlock.height;
-    document.getElementById("estimatedTxCount").textContent =
-      nextBlock.tx_count || "N/A";
-  } catch (err) {
-    console.error("⚠️ Next block error:", err);
-    showError("Error fetching next block");
+  const seconds = Math.floor((Date.now() - lastUpdateTime) / 1000);
+  if (seconds < 5) {
+    timeAgoEl.textContent = "updated just now";
+  } else if (seconds < 60) {
+    timeAgoEl.textContent = `updated ${seconds} seconds ago`;
+  } else {
+    const mins = Math.floor(seconds / 60);
+    timeAgoEl.textContent = `updated ${mins} minute${mins > 1 ? "s" : ""} ago`;
   }
 }
 
@@ -122,7 +114,6 @@ function updatePlayersList() {
   const list = document.getElementById("playersList");
   list.innerHTML = "";
 
-  // Remove skeleton shimmer when real data is added
   list.classList.remove("skeleton");
 
   players.forEach((p) => {
@@ -132,6 +123,14 @@ function updatePlayersList() {
   });
 
   document.getElementById("playersCount").textContent = players.length;
+}
+
+/* === Remove Skeleton Utility === */
+function removeLeaderboardSkeleton() {
+  const list = document.getElementById("leaderboardList");
+  if (list) {
+    list.querySelectorAll("li").forEach((li) => li.classList.remove("skeleton"));
+  }
 }
 
 /* === Chat === */

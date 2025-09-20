@@ -19,18 +19,17 @@ let gameState = {
 
 /* === FARCASTER SDK INITIALIZATION === */
 async function initializeFarcasterSDK() {
-  console.log('🚀 Initializing Farcaster MiniApp...');
+  console.log("🚀 Initializing Farcaster MiniApp...");
 
   try {
-    const farcasterModule = await import('@farcaster/miniapp-sdk');
-    const sdk = farcasterModule.sdk;
+    const sdk = window.farcaster;
     window.farcasterSDK = sdk;
 
     let context;
     try {
       context = await sdk.context.get();
     } catch (err) {
-      console.warn('⚠️ No user context, fallback to anonymous');
+      console.warn("⚠️ No user context, fallback to anonymous");
     }
 
     if (context?.user) {
@@ -39,7 +38,7 @@ async function initializeFarcasterSDK() {
         context.user.username || context.user.displayName || `user${context.user.fid}`;
 
       updateUserDisplay();
-      addChatMessage('System', `@${gameState.currentUser.username} joined the battle! 🎯`, 'system');
+      addChatMessage("System", `@${gameState.currentUser.username} joined the battle! 🎯`, "system");
     } else {
       continueAnonymous();
     }
@@ -52,50 +51,50 @@ async function initializeFarcasterSDK() {
     await initializeGame();
 
   } catch (error) {
-    console.error('❌ Failed to initialize Farcaster SDK:', error);
+    console.error("❌ Failed to initialize Farcaster SDK:", error);
     handleSDKError(error);
   }
 }
 
 function generateAnonymousId() {
-  return 'anon_' + Math.random().toString(36).substr(2, 9);
+  return "anon_" + Math.random().toString(36).substr(2, 9);
 }
 
 function continueAnonymous() {
   gameState.currentUser.fid = generateAnonymousId();
-  gameState.currentUser.username = 'Anonymous';
-  addChatMessage('System', 'Anonymous player joined the battle! 👤', 'system');
+  gameState.currentUser.username = "Anonymous";
+  addChatMessage("System", "Anonymous player joined the battle! 👤", "system");
   initializeGame();
   hideLoadingScreen();
 }
 
 function updateUserDisplay() {
-  const userInfo = document.getElementById('userInfo');
-  const userName = document.getElementById('userName');
-  const userFid = document.getElementById('userFid');
+  const userInfo = document.getElementById("userInfo");
+  const userName = document.getElementById("userName");
+  const userFid = document.getElementById("userFid");
 
   if (userInfo && userName && userFid) {
     userName.textContent = gameState.currentUser.username;
     userFid.textContent = gameState.currentUser.fid;
-    userInfo.style.display = 'block';
+    userInfo.style.display = "block";
   }
 }
 
 function hideLoadingScreen() {
-  document.getElementById('loadingScreen')?.classList.add('hidden');
-  const container = document.querySelector('.container');
+  document.getElementById("loadingScreen")?.classList.add("hidden");
+  const container = document.querySelector(".container");
   if (container) {
-    container.classList.remove('hidden');
-    container.style.opacity = '1';
-    container.style.transform = 'translateY(0)';
+    container.classList.remove("hidden");
+    container.style.opacity = "1";
+    container.style.transform = "translateY(0)";
   }
 }
 
 function handleSDKError(error) {
-  const errorScreen = document.getElementById('errorScreen');
-  const errorMessage = document.getElementById('errorMessage');
+  const errorScreen = document.getElementById("errorScreen");
+  const errorMessage = document.getElementById("errorMessage");
 
-  if (errorScreen) errorScreen.classList.remove('hidden');
+  if (errorScreen) errorScreen.classList.remove("hidden");
   if (errorMessage) errorMessage.textContent = `SDK Error: ${error.message}`;
 }
 
@@ -112,27 +111,27 @@ async function initializeGame() {
   updateGameStats();
   updatePlayersList();
   connectToBitcoinNetwork();
-  addChatMessage('System', '🚀 TX Battle Royale initialized!', 'system');
-  updateGameStatus('🔄 Connecting to Bitcoin network...');
+  addChatMessage("System", "🚀 TX Battle Royale initialized!", "system");
+  updateGameStatus("🔄 Connecting to Bitcoin network...");
 }
 
 /* === EVENT LISTENERS === */
 function setupEventListeners() {
-  const predictionInput = document.getElementById('predictionInput');
-  const submitButton = document.getElementById('submitPrediction');
-  const chatInput = document.getElementById('chatInput');
-  const sendButton = document.getElementById('sendMessage');
+  const predictionInput = document.getElementById("predictionInput");
+  const submitButton = document.getElementById("submitPrediction");
+  const chatInput = document.getElementById("chatInput");
+  const sendButton = document.getElementById("sendMessage");
 
   if (submitButton) submitButton.onclick = submitGuess;
   if (predictionInput) {
-    predictionInput.addEventListener('keypress', e => {
-      if (e.key === 'Enter') submitGuess();
+    predictionInput.addEventListener("keypress", e => {
+      if (e.key === "Enter") submitGuess();
     });
   }
   if (sendButton) sendButton.onclick = sendChatMessage;
   if (chatInput) {
-    chatInput.addEventListener('keypress', e => {
-      if (e.key === 'Enter') sendChatMessage();
+    chatInput.addEventListener("keypress", e => {
+      if (e.key === "Enter") sendChatMessage();
     });
   }
 }
@@ -141,10 +140,10 @@ function setupEventListeners() {
 function connectToBitcoinNetwork() {
   if (gameState.websocket) gameState.websocket.close();
 
-  gameState.websocket = new WebSocket('wss://mempool.space/api/v1/ws');
+  gameState.websocket = new WebSocket("wss://mempool.space/api/v1/ws");
 
   gameState.websocket.onopen = () => {
-    updateGameStatus('🟢 Connected to Bitcoin network. Waiting for next block...');
+    updateGameStatus("🟢 Connected to Bitcoin network. Waiting for next block...");
     fetchCurrentBlock();
   };
 
@@ -153,24 +152,24 @@ function connectToBitcoinNetwork() {
       const data = JSON.parse(e.data);
       handleWebSocketMessage(data);
     } catch (err) {
-      console.error('Error parsing WebSocket message:', err);
+      console.error("Error parsing WebSocket message:", err);
     }
   };
 
   gameState.websocket.onerror = () => {
-    updateGameStatus('❌ Connection error. Retrying...');
+    updateGameStatus("❌ Connection error. Retrying...");
     setTimeout(connectToBitcoinNetwork, 5000);
   };
 
   gameState.websocket.onclose = () => {
-    console.log('📡 Connection closed. Reconnecting...');
+    console.log("📡 Connection closed. Reconnecting...");
     setTimeout(connectToBitcoinNetwork, 3000);
   };
 }
 
 function handleWebSocketMessage(data) {
   if (data.block) handleNewBlock(data.block);
-  if (data.mempoolInfo) updateEstimatedTransactions(data.mempoolInfo.count || 'Unknown');
+  if (data.mempoolInfo) updateEstimatedTransactions(data.mempoolInfo.count || "Unknown");
   if (data.txCount) updateEstimatedTransactions(data.txCount);
 }
 
@@ -218,262 +217,163 @@ async function fetchNextBlock() {
 
 /* === GAME LOGIC === */
 function submitGuess() {
-  const predictionInput = document.getElementById('predictionInput');
-  const guess = parseInt(predictionInput.value);
-
-  if (!guess || guess < 1 || guess > 10000) {
-    alert('⚠️ Enter a valid guess between 1 and 10,000 transactions');
-    return;
-  }
-  if (gameState.currentUser.guess !== null) {
-    alert('⚠️ You already guessed this round!');
+  const input = document.getElementById("predictionInput");
+  const guess = parseInt(input.value);
+  if (!guess || guess < 1) {
+    alert("⚠️ Enter a valid prediction!");
     return;
   }
 
   gameState.currentUser.guess = guess;
-  gameState.isRoundActive = true;
+  addChatMessage("System", `📩 @${gameState.currentUser.username} predicted ${guess}`, "system");
+  input.value = "";
 
-  gameState.players = gameState.players.filter(p => p.fid !== gameState.currentUser.fid);
-  gameState.players.push({
-    fid: gameState.currentUser.fid,
-    username: gameState.currentUser.username,
-    guess,
-    timestamp: Date.now()
-  });
-
-  predictionInput.disabled = true;
-  document.getElementById('submitPrediction').textContent = '✅ Guess Locked';
-  document.getElementById('submitPrediction').disabled = true;
-
-  addChatMessage(`@${gameState.currentUser.username}`, `I guess ${guess} txs 🎯`, 'guess');
   updatePlayersList();
-  updateGameStats();
   saveGameState();
-  updateGameStatus(`🎯 Your guess (${guess}) is locked. Waiting for next block...`);
 }
 
 function handleNewBlock(block) {
-  if (!gameState.isRoundActive || gameState.players.length === 0) {
-    updateGameStatus(`⛏️ Block ${block.height} mined with ${block.tx_count} txs`);
-    return;
-  }
+  if (!block) return;
 
-  const actualTxCount = block.tx_count;
-  const results = gameState.players.map(p => ({
-    ...p,
-    difference: Math.abs(p.guess - actualTxCount),
-    actualTxCount
-  })).sort((a, b) => a.difference - b.difference);
+  gameState.blockHeight = block.height;
+  updateCurrentBlockHeight(block.height);
 
-  const winner = results[0];
+  const txCount = block.tx_count || "Unknown";
+  updateEstimatedTransactions(txCount);
 
-  if (winner.fid === gameState.currentUser.fid) {
-    gameState.currentUser.wins++;
-    gameState.currentUser.streak++;
+  if (gameState.isRoundActive) {
+    announceResults(txCount);
+    startNewRound();
   } else {
-    gameState.currentUser.streak = 0;
+    gameState.isRoundActive = true;
   }
-
-  announceResults(block, winner, results);
-  setTimeout(startNewRound, 10000);
 }
 
-function announceResults(block, winner, results) {
-  const winnerAnnouncement = document.getElementById('winnerAnnouncement');
-  if (winnerAnnouncement) {
-    winnerAnnouncement.innerHTML = `
-      <div>
-        <h3>🏆 Round ${gameState.round} Winner!</h3>
-        <p><strong>@${winner.username}</strong></p>
-        <p>Guess: ${winner.guess} | Actual: ${winner.actualTxCount} | Diff: ${winner.difference}</p>
-      </div>
-    `;
-    winnerAnnouncement.classList.remove('hidden');
+function announceResults(txCount) {
+  const winner = gameState.players.reduce((prev, player) => {
+    if (!player.guess) return prev;
+    return Math.abs(player.guess - txCount) < Math.abs(prev.guess - txCount) ? player : prev;
+  }, gameState.players[0]);
+
+  if (winner) {
+    winner.wins++;
+    winner.streak++;
+    addChatMessage("System", `🏆 Winner: @${winner.username} with ${winner.guess} (Block ${gameState.blockHeight}, ${txCount} txs)`, "system");
+
+    if (winner.fid === gameState.currentUser.fid) {
+      gameState.currentUser.wins++;
+      gameState.currentUser.streak++;
+    }
   }
 
-  addChatMessage('System', `⛏️ Block ${block.height} had ${winner.actualTxCount} txs`, 'system');
-  addChatMessage('System', `🏆 @${winner.username} wins Round ${gameState.round}!`, 'winner');
-
-  if (results[1]) addChatMessage('System', `🥈 @${results[1].username} (${results[1].guess})`, 'result');
-  if (results[2]) addChatMessage('System', `🥉 @${results[2].username} (${results[2].guess})`, 'result');
-
-  updatePlayersList(results);
-  createConfettiEffect();
+  updateGameStats();
+  saveGameState();
 }
 
 function startNewRound() {
   gameState.round++;
-  gameState.isRoundActive = false;
-  gameState.players = [];
-  gameState.currentUser.guess = null;
-
-  document.getElementById('predictionInput').value = '';
-  document.getElementById('predictionInput').disabled = false;
-  document.getElementById('submitPrediction').innerHTML = 'Submit Prediction 🚀';
-  document.getElementById('submitPrediction').disabled = false;
-  document.getElementById('winnerAnnouncement').classList.add('hidden');
-
+  gameState.players.forEach(p => (p.guess = null));
   updatePlayersList();
   updateGameStats();
-  saveGameState();
-  addChatMessage('System', `🚀 Round ${gameState.round} started!`, 'system');
-  updateGameStatus(`🎮 Round ${gameState.round} started. Make your guess!`);
 }
 
-/* === UI UPDATES === */
-function updateGameStats() {
-  document.getElementById('roundNumber').textContent = gameState.round;
-  document.getElementById('playersCount').textContent = gameState.players.length;
-  document.getElementById('userWins').textContent = gameState.currentUser.wins;
-  document.getElementById('winStreak').textContent = gameState.currentUser.streak;
-  document.getElementById('participantCount').textContent = `${gameState.players.length} players`;
-}
-
-function updatePlayersList(results = null) {
-  const playersList = document.getElementById('playersList');
-  const emptyPlayers = document.getElementById('emptyPlayers');
-  if (!playersList) return;
-
-  const playersToShow = results || gameState.players;
-  if (playersToShow.length === 0) {
-    playersList.innerHTML = '';
-    if (emptyPlayers) emptyPlayers.style.display = 'block';
-    return;
-  }
-  if (emptyPlayers) emptyPlayers.style.display = 'none';
-
-  playersList.innerHTML = playersToShow.map((p, i) => {
-    const medal = results && i < 3 ? ['🏆','🥈','🥉'][i] : '';
-    return `
-      <li>
-        <span>${medal} @${p.username}${p.fid===gameState.currentUser.fid?' (You)':''}</span>
-        <span>${p.guess} txs${results?` (diff: ${p.difference})`:''}</span>
-      </li>
-    `;
-  }).join('');
-}
-
+/* === UI HELPERS === */
 function updateGameStatus(msg) {
-  document.getElementById('gameStatus').textContent = msg;
+  const el = document.getElementById("gameStatus");
+  if (el) el.textContent = msg;
 }
 
-function updateCurrentBlockHeight(h) {
-  document.getElementById('currentBlockHeight').textContent = h;
+function updateCurrentBlockHeight(height) {
+  const el = document.getElementById("currentBlockHeight");
+  if (el) el.textContent = height;
 }
 
-function updateEstimatedTransactions(c) {
-  document.getElementById('estimatedTxCount').textContent = `~${c}`;
+function updateEstimatedTransactions(count) {
+  const el = document.getElementById("estimatedTxCount");
+  if (el) el.textContent = count;
+}
+
+function updateGameStats() {
+  document.getElementById("roundNumber").textContent = gameState.round;
+  document.getElementById("playersCount").textContent = gameState.players.length;
+  document.getElementById("userWins").textContent = gameState.currentUser.wins;
+  document.getElementById("winStreak").textContent = gameState.currentUser.streak;
+}
+
+function updatePlayersList() {
+  const list = document.getElementById("playersList");
+  const empty = document.getElementById("emptyPlayers");
+  if (!list) return;
+
+  list.innerHTML = "";
+  gameState.players.forEach(player => {
+    const li = document.createElement("li");
+    li.textContent = `@${player.username} → ${player.guess || "No guess"}`;
+    list.appendChild(li);
+  });
+
+  if (gameState.players.length > 0) {
+    empty.style.display = "none";
+  } else {
+    empty.style.display = "block";
+  }
 }
 
 /* === CHAT SYSTEM === */
+function addChatMessage(user, msg, type = "user") {
+  const container = document.getElementById("chatMessages");
+  const div = document.createElement("div");
+  div.className = type === "system" ? "chat-message system" : "chat-message";
+  div.textContent = `[${user}] ${msg}`;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
 function sendChatMessage() {
-  const chatInput = document.getElementById('chatInput');
-  const message = chatInput.value.trim();
-  if (!message) return;
-
-  addChatMessage(`@${gameState.currentUser.username}`, message, 'user');
-  chatInput.value = '';
-}
-
-function addChatMessage(username, message, type = 'user') {
-  const chatContainer = document.getElementById('chatMessages');
-  if (!chatContainer) return;
-
-  const timestamp = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
-  const messageElement = document.createElement('div');
-  messageElement.className = `chat-message chat-message-${type}`;
-
-  messageElement.innerHTML = `
-    <div><span class="chat-name">${username}</span> <span class="chat-time">${timestamp}</span></div>
-    <div class="chat-text">${escapeHtml(message)}</div>
-  `;
-
-  chatContainer.appendChild(messageElement);
-  chatContainer.scrollTop = chatContainer.scrollHeight;
-  while (chatContainer.children.length > 100) {
-    chatContainer.removeChild(chatContainer.firstChild);
-  }
-}
-
-function escapeHtml(t) {
-  const div = document.createElement('div');
-  div.textContent = t;
-  return div.innerHTML;
-}
-
-/* === VISUALS === */
-function createConfettiEffect() {
-  const confetti = document.createElement('div');
-  confetti.className = 'confetti-container';
-  for (let i=0;i<50;i++) {
-    const particle = document.createElement('div');
-    particle.style.cssText = `
-      position:absolute;width:8px;height:8px;
-      background:hsl(${Math.random()*360},100%,60%);
-      border-radius:50%;
-      top:${Math.random()*100}%;left:${Math.random()*100}%;
-      animation:confetti-fall ${2+Math.random()*2}s ease-out forwards;
-    `;
-    confetti.appendChild(particle);
-  }
-  document.body.appendChild(confetti);
-  setTimeout(()=>document.body.removeChild(confetti),4000);
+  const input = document.getElementById("chatInput");
+  const msg = input.value.trim();
+  if (!msg) return;
+  addChatMessage(gameState.currentUser.username, msg);
+  input.value = "";
 }
 
 /* === STORAGE === */
 function saveGameState() {
-  try {
-    localStorage.setItem('txBattleState', JSON.stringify({
-      round: gameState.round,
-      wins: gameState.currentUser.wins,
-      streak: gameState.currentUser.streak
-    }));
-  } catch(e) { console.warn('Save failed', e); }
+  localStorage.setItem("txBattleState", JSON.stringify(gameState));
 }
 
 function loadGameState() {
+  const data = localStorage.getItem("txBattleState");
+  if (!data) return;
   try {
-    const saved = localStorage.getItem('txBattleState');
-    if (saved) {
-      const s = JSON.parse(saved);
-      gameState.round = s.round || 1;
-      gameState.currentUser.wins = s.wins || 0;
-      gameState.currentUser.streak = s.streak || 0;
-    }
-  } catch(e) { console.warn('Load failed', e); }
+    gameState = JSON.parse(data);
+  } catch (err) {
+    console.error("Failed to parse saved state", err);
+  }
 }
 
 /* === SOCIAL SHARING === */
-function shareWin() {
-  if (gameState.currentUser.wins===0) {
-    alert('Win a round first!');
-    return;
-  }
-  const shareData = {
-    title:'🏆 TX Battle Royale',
-    text:`I just won a Bitcoin tx prediction! Streak: ${gameState.currentUser.streak} 🔥`,
-    url:window.location.href
-  };
-  if (navigator.share) navigator.share(shareData);
-  else copyToClipboard(`${shareData.text} ${shareData.url}`);
-}
-
 function shareGame() {
-  const shareData = {
-    title:'🎯 TX Battle Royale',
-    text:'Join me predicting Bitcoin blocks on Farcaster!',
-    url:window.location.href
-  };
-  if (navigator.share) navigator.share(shareData);
-  else copyToClipboard(`${shareData.text} ${shareData.url}`);
+  if (navigator.share) {
+    navigator.share({
+      title: "TX Battle Royale",
+      text: "Join me in predicting Bitcoin blocks on TX Battle Royale!",
+      url: window.location.href
+    });
+  } else {
+    alert("Sharing not supported");
+  }
 }
 
-function copyToClipboard(text) {
-  const ta = document.createElement('textarea');
-  ta.value = text;
-  document.body.appendChild(ta);
-  ta.select();
-  document.execCommand('copy');
-  document.body.removeChild(ta);
-    }
-  
+function shareWin() {
+  if (navigator.share) {
+    navigator.share({
+      title: "TX Battle Royale",
+      text: `I just won a round with ${gameState.currentUser.guess} tx prediction! 🏆`,
+      url: window.location.href
+    });
+  } else {
+    alert("Sharing not supported");
+  }
+      }
+    

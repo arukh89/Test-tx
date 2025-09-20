@@ -5,16 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TX Battle Royale</title>
 
-  <!-- Farcaster Miniapp Metadata -->
-  <meta name="fc:miniapp" content='{
-    "version": "1",
-    "imageUrl": "https://testtx.netlify.app/og.png",
-    "button": {
-      "title": "Join Battle",
-      "action": { "type": "launch" }
-    }
-  }' />
+  <!-- Manifest -->
+  <link rel="manifest" href="/.well-known/farcaster.json" />
 
+  <!-- Favicon & Icons -->
+  <link rel="icon" type="image/png" href="/icons/icon-192.png" />
+
+  <!-- Styles -->
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -29,30 +26,27 @@
     <p id="errorMessage"></p>
   </div>
 
-  <!-- Main App Container -->
+  <!-- Main App -->
   <div class="container hidden">
     <header>
-      <h1>TX Battle Royale</h1>
-      <div id="userInfo" style="display: none;">
-        <span id="userName"></span> (<span id="userFid"></span>)
+      <h1>TX Battle Royale ⚡</h1>
+      <div id="userInfo" style="display:none;">
+        Logged in as <strong id="userName"></strong> (FID: <span id="userFid"></span>)
       </div>
     </header>
 
     <!-- Game Status -->
-    <section id="gameStatus" class="status">🔄 Connecting...</section>
-
-    <!-- Prediction Form -->
-    <section class="prediction-form">
-      <input id="predictionInput" type="number" placeholder="Enter your guess (1-10000)" />
-      <button id="submitPrediction">Submit Prediction 🚀</button>
-    </section>
-
-    <!-- Game Info -->
     <section class="stats">
       <p>Round: <span id="roundNumber">1</span></p>
       <p>Players: <span id="playersCount">0</span></p>
       <p>Wins: <span id="userWins">0</span></p>
       <p>Streak: <span id="winStreak">0</span></p>
+    </section>
+
+    <!-- Prediction Form -->
+    <section class="prediction-form">
+      <input id="predictionInput" type="number" placeholder="Enter your guess (1-10000)" />
+      <button id="submitPrediction">Submit Prediction 🚀</button>
     </section>
 
     <!-- Winner Announcement -->
@@ -61,7 +55,6 @@
     <!-- Players List -->
     <section class="players">
       <h3>Players</h3>
-      <p id="emptyPlayers">No players yet...</p>
       <ul id="playersList"></ul>
     </section>
 
@@ -85,23 +78,17 @@
       </div>
     </section>
 
-    <!-- Social Share -->
+    <!-- Share -->
     <section class="share">
       <button onclick="shareGame()">Share Game 🎮</button>
       <button onclick="shareWin()">Share Win 🏆</button>
     </section>
   </div>
 
-  <!-- Farcaster Miniapp SDK via CDN -->
+  <!-- Farcaster Miniapp SDK -->
   <script src="https://unpkg.com/@farcaster/miniapp-sdk/dist/browser.js"></script>
 
   <!-- App Logic -->
   <script src="app.js"></script>
-  <script>
-    // Auto-start MiniApp SDK on page load
-    window.addEventListener("load", () => {
-      initializeFarcasterSDK();
-    });
-  </script>
 </body>
 </html>

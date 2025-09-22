@@ -32,6 +32,15 @@ app.use('/socket.io', createProxyMiddleware({
   ws: true
 }));
 
+// Expose backend API routes under /api path
+app.use('/api', createProxyMiddleware({
+  target: 'http://localhost:3001',
+  changeOrigin: true,
+  pathRewrite: {
+    '^/api': '' // Remove /api prefix when forwarding to backend
+  }
+}));
+
 // Serve index.html for all other routes (SPA fallback)
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));

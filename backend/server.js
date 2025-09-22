@@ -1,138 +1,132 @@
-// server.js (Backend Hybrid - Replit)
-// Support "state" (versi lama) + granular events (versi baru)
-
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
 const fetch = require("node-fetch");
-const cors = require("cors");
 
 const app = express();
-app.use(cors());
-
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: "*",
-    methods: ["GET", "POST"]
-  }
+  },
 });
 
-// -------------------
-// State
-// -------------------
+const PORT = process.env.PORT || 3000;
+
+// Data in-memory
+let currentBlock = null;
 let players = [];
 let leaderboard = [];
-let currentBlock = null;
-let previousBlock = null;
+let blocks = [];
 
-// -------------------
-// Fetch Bitcoin Block (mempool.space API)
-// -------------------
-async function fetchBlocks() {
+// Fetch latest blocks
+async function fetchLatestBlocks() {
   try {
     const res = await fetch("https://mempool.space/api/blocks");
     const data = await res.json();
-    if (data && data.length > 0) {
-      currentBlock = {
-        height: data[0].height,
-        tx_count: data[0].tx_count
-      };
-      if (data.length > 1) {
-        previousBlock = {
-          height: data[1].height,
-          tx_count: data[1].tx_count
-        };
-      }
-
-      // 🔹 Emit granular event
+    if (Array.isArray(data) && data.length > 0) {
+      blocks = data;
+      currentBlock = data[0];
       io.emit("block_update", currentBlock);
-
-      // 🔹 Emit state event (lama)
-      io.emit("state", {
-        block: currentBlock,
-        previousBlock,
-        players,
-        leaderboard
-      });
     }
   } catch (err) {
-    console.error("Error fetch blocks:", err);
+    console.error("Error fetching blocks", err);
   }
 }
 
-// update tiap 30 detik
-setInterval(fetchBlocks, 30000);
-fetchBlocks();
+// Update leaderboard (simple scoring)
+function updateLeaderboard() {
+  leaderboard = players.map((p) => ({
+    name: p.name,
+    score: Math.floor(Math.random() * 100), // random for demo
+  }));
+  io.emit("leaderboard_update", leaderboard);
+}
 
-// -------------------
-// Socket.io Logic
-// -------------------
+// Run fetch every 30s
+setInterval(fetchLatestBlocks, 30000);
+fetchLatestBlocks();
+
+// Socket.io logic
 io.on("connection", (socket) => {
-  console.log("✅ Client connected");
+  console.log("New client connected");
 
-  // join
-  socket.on("join", ({ fid, name }) => {
-    if (!players.find((p) => p.fid === fid)) {
-      players.push({ fid, name: name || `User-${fid}`, prediction: null, score: 0 });
+  // --- Core handlers ---
+  socket.on("join", (data) => {
+    console.log("join", data);
+    players.push({ name: data?.fid || "anon", prediction: null });
+    io.emit("players_update", players);
+    socket.emit("state", { block: currentBlock, players, leaderboard });
+  });
+
+  socket.on("prediction", (data) => {
+    console.log("prediction", data);
+    if (!data?.fid) return;
+    const player = players.find((p) => p.name === data.fid);
+    if (player) {
+      player.prediction = data.prediction;
     }
-
-    // granular
     io.emit("players_update", players);
-    // state
-    io.emit("state", { block: currentBlock, previousBlock, players, leaderboard });
+    updateLeaderboard();
   });
 
-  // prediction
-  socket.on("prediction", ({ fid, prediction }) => {
-    players = players.map((p) =>
-      p.fid === fid ? { ...p, prediction } : p
-    );
-    io.emit("players_update", players);
-    io.emit("state", { block: currentBlock, previousBlock, players, leaderboard });
+  socket.on("chat_message", (data) => {
+    console.log("chat_message", data);
+    io.emit("chat_message", { user: data?.fid || "anon", message: data.message });
   });
 
-  // chat
-  socket.on("chat_message", ({ fid, message }) => {
-    const player = players.find((p) => p.fid === fid);
-    const name = player ? player.name : `User-${fid}`;
-    io.emit("chat_message", { user: name, message });
-  });
-
-  // update score (leaderboard)
-  socket.on("update_score", ({ fid, points }) => {
-    players = players.map((p) =>
-      p.fid === fid ? { ...p, score: p.score + points } : p
-    );
-    leaderboard = [...players].sort((a, b) => b.score - a.score);
-
-    io.emit("leaderboard_update", leaderboard);
-    io.emit("state", { block: currentBlock, previousBlock, players, leaderboard });
-  });
-
-  // previous block
   socket.on("get_previous_block", () => {
-    if (previousBlock) {
-      socket.emit("block_update", previousBlock);
+    if (blocks.length > 1) {
+      socket.emit("block_update", blocks[1]);
     }
   });
 
-  // present block
   socket.on("get_present_block", () => {
-    if (currentBlock) {
-      socket.emit("block_update", currentBlock);
+    if (blocks.length > 0) {
+      socket.emit("block_update", blocks[0]);
     }
   });
 
-  socket.on("disconnect", () => {
-    console.log("❌ Client disconnected");
+  // --- ✅ Compatibility aliases (tambahan, tidak mengubah HTML/CSS) ---
+  socket.on("join_game", (data) => {
+    console.log("alias join_game", data);
+    players.push({ name: data?.fid || "anon", prediction: null });
+    io.emit("players_update", players);
+    socket.emit("state", { block: currentBlock, players, leaderboard });
+  });
+
+  socket.on("submit_prediction", (data) => {
+    console.log("alias submit_prediction", data);
+    if (!data?.fid) return;
+    const player = players.find((p) => p.name === data.fid);
+    if (player) {
+      player.prediction = data.prediction;
+    }
+    io.emit("players_update", players);
+    updateLeaderboard();
+  });
+
+  socket.on("request_prev_block", () => {
+    console.log("alias request_prev_block");
+    if (blocks.length > 1) {
+      socket.emit("block_update", blocks[1]);
+    }
+  });
+
+  socket.on("request_present_block", () => {
+    console.log("alias request_present_block");
+    if (blocks.length > 0) {
+      socket.emit("block_update", blocks[0]);
+    }
   });
 });
 
-// -------------------
+// Routes
+app.get("/", (req, res) => {
+  res.send("TX Battle Royale backend is running");
+});
+
 // Start server
-// -------------------
-const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`🚀 Backend running on port ${PORT}`);
+  console.log(`Server listening on port ${PORT}`);
 });

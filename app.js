@@ -48,9 +48,33 @@ function renderLeaderboard(items) {
   });
 }
 
+// 🔑 Koneksi ke wallet Farcaster
+async function connectWallet() {
+  if (typeof sdk !== "undefined" && sdk.wallet) {
+    try {
+      const user = await sdk.wallet.getUser();
+      currentUser = user.username || `fid:${user.fid}`;
+      el('userName').textContent = currentUser;
+
+      // opsional: ambil address wallet
+      const addr = await sdk.wallet.getAddress();
+      console.log("Wallet address:", addr);
+
+      appendChat(`🔗 Connected as ${currentUser}`);
+      socket.emit('join', { display: currentUser, fid: user.fid, address: addr });
+    } catch (err) {
+      console.error("Wallet connect failed:", err);
+      appendChat("⚠️ Gagal konek ke Farcaster wallet");
+    }
+  } else {
+    console.log("Farcaster SDK tidak tersedia (mungkin bukan dalam MiniApp preview).");
+  }
+}
+
 // socket events
 socket.on('connect', () => {
   el('status').textContent = 'Connected to server';
+  connectWallet(); // ✅ koneksi wallet saat socket connect
 });
 
 socket.on('disconnect', () => {
@@ -85,7 +109,7 @@ el('submitPrediction').addEventListener('click', async () => {
     } catch (e) { console.warn('sign failed', e); }
   }
 
-  socket.emit('prediction', { guess: v, sig });
+  socket.emit('prediction', { guess: v, sig, user: currentUser });
   socket.emit('chat', `🔮 ${currentUser} menebak: ${v} TX`);
   el('predictionInput').value = '';
 });
@@ -106,10 +130,12 @@ el('sendMessage').addEventListener('click', () => {
   el('chatInput').value = '';
 });
 
-// join
+// join manual (kalau user klik tombol "Join Battle")
 el('joinButton').addEventListener('click', () => {
-  currentUser = `User-${socket.id.slice(0,4)}`;
-  el('userName').textContent = currentUser;
+  if (currentUser === "Anonymous") {
+    currentUser = `User-${socket.id.slice(0,4)}`;
+    el('userName').textContent = currentUser;
+  }
   socket.emit('join', { display: currentUser });
 });
 
@@ -138,3 +164,8 @@ el('presentBlockBtn').addEventListener('click', () => {
     appendChat("No current block data yet.");
   }
 });
+
+// ✅ Beritahu Farcaster kalau app sudah siap (hilangkan splash screen)
+if (typeof sdk !== "undefined" && sdk.actions && sdk.actions.ready) {
+  sdk.actions.ready();
+}

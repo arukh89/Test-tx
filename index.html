@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TX Battle Royale</title>
+  <!-- ✅ pastikan file ada di root Netlify -->
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -44,10 +45,17 @@
     </section>
   </div>
 
-  <!-- ✅ Perubahan satu-satunya: urutan script -->
-  <!-- SDK dulu -->
+  <!-- ✅ SDK harus lebih dulu -->
   <script src="https://unpkg.com/@farcaster/miniapp-sdk/dist/index.umd.js"></script>
-  <!-- lalu app.js -->
+  <!-- ✅ lalu app.js -->
   <script src="app.js"></script>
+
+  <!-- 🔍 Debug helper -->
+  <script>
+    console.log("=== Debug Check ===");
+    console.log("CSS loaded?", [...document.styleSheets].map(s => s.href));
+    console.log("Window.Farcaster:", window.Farcaster);
+    console.log("SDK actions:", window.Farcaster ? window.Farcaster.actions : null);
+  </script>
 </body>
 </html>

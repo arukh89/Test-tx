@@ -18,7 +18,7 @@
     "primaryCategory": "social",
     "tags": ["blockchain", "bitcoin", "prediction", "game", "realtime"],
     "heroImageUrl": "https://testtx.netlify.app/og.png",
-    "tagline": "Compete and predict BTC blocks!",
+    "tagline": "Compete and predict BTC blocks",
     "ogTitle": "TX Battle Royale",
     "ogDescription": "Real-time Bitcoin block prediction battle. Guess transactions and climb the leaderboard!",
     "ogImageUrl": "https://testtx.netlify.app/og.png"

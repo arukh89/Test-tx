@@ -1,74 +1,53 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TX Battle Royale</title>
-  <link rel="stylesheet" href="style.css">
-
-  <!-- Farcaster Mini App embed -->
-  <meta name="fc:miniapp" content='{
-    "version": "1",
-    "imageUrl": "https://testtx.netlify.app/og.png",
-    "button": {
-      "title": "Open App",
-      "action": {
-        "type": "launch_frame",
-        "name": "TX Battle Royale",
-        "url": "https://testtx.netlify.app",
-        "splashImageUrl": "https://testtx.netlify.app/og.png",
-        "splashBackgroundColor": "#1a1a1a"
-      }
-    }
-  }'>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>TX Battle Royale</h1>
-      <p class="subtitle">BTC Block Prediction</p>
-    </header>
+  <div id="app">
+    <h1>TX Battle Royale</h1>
 
-    <p class="status" id="status">Connecting...</p>
+    <div id="block-status">Connecting...</div>
 
-    <div class="grid">
-      <!-- Battle Arena -->
-      <div class="card">
-        <h2>Battle Arena</h2>
-        <div class="row">
-          <button class="cta" id="joinBtn">Join Battle</button>
-          <button class="cta" id="shareBtn">Share</button>
-          <button class="cta" id="prevBlockBtn">Previous Block</button>
-          <button class="cta" id="currBlockBtn">Present Block</button>
-        </div>
-
-        <p class="small muted">Your TX guess</p>
-        <div class="row">
-          <input type="number" id="predictionInput" placeholder="e.g. 2500">
-          <button class="cta" id="submitPrediction">Submit Prediction</button>
-        </div>
-
-        <p class="small">Players (<span id="playerCount">0</span>)</p>
-        <ul id="playerList"></ul>
-
-        <h3>Chat</h3>
-        <div class="chatBox" id="chatBox"></div>
-        <div class="row">
-          <input type="text" id="chatInput" placeholder="Say something...">
-          <button class="cta" id="sendBtn">Send</button>
-        </div>
-      </div>
-
-      <!-- Leaderboard -->
-      <div class="card leaderboard">
-        <h2>Leaderboard</h2>
-        <p class="small" id="userStatus">Signed in as Not signed</p>
-        <ul id="leaderboardList"></ul>
-      </div>
+    <div class="controls">
+      <button id="join-btn">Join Game</button>
+      <button id="share-btn">Share</button>
+      <button id="prev-block-btn">Prev Block</button>
+      <button id="present-block-btn">Present Block</button>
     </div>
+
+    <form id="prediction-form">
+      <input type="number" id="prediction" placeholder="Predict TX count" required />
+      <button type="submit">Submit</button>
+    </form>
+
+    <section class="players-section">
+      <h2>Players</h2>
+      <ul id="players-list"></ul>
+    </section>
+
+    <section class="leaderboard-section">
+      <h2>Leaderboard</h2>
+      <ul id="leaderboard-list"></ul>
+    </section>
+
+    <section class="chat-section">
+      <h2>Chat</h2>
+      <div id="chat-messages"></div>
+      <form id="chat-form">
+        <input type="text" id="chat-input" placeholder="Type message..." required />
+        <button type="submit">Send</button>
+      </form>
+    </section>
   </div>
 
+  <!-- ✅ Perubahan satu-satunya: urutan script -->
+  <!-- SDK dulu -->
   <script src="https://unpkg.com/@farcaster/miniapp-sdk/dist/index.umd.js"></script>
+  <!-- lalu app.js -->
   <script src="app.js"></script>
 </body>
 </html>

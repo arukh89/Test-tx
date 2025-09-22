@@ -4,7 +4,7 @@
 import { actions } from "@farcaster/miniapp-sdk";
 
 // Ganti dengan URL backend Replit kamu
-const API_URL = "https://1a4f1f38-1bc5-459f-89d3-7e411642339d-00-8cgu1jweczd6.sisko.replit.dev/";
+const API_URL = "https://1a4f1f38-1bc5-459f-89d3-7e411642339d-00-8cgu1jweczd6.sisko.replit.dev";
 
 // -------------------
 // DOM Elements

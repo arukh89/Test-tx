@@ -1,9 +1,14 @@
-// app.js
+// app.js (Frontend - Netlify)
+// Full default logic, connect ke backend Replit
+
 import { actions } from "@farcaster/miniapp-sdk";
 
-const API_URL = "https://YOUR-BACKEND-URL"; // ganti dengan URL backend kamu
+// Ganti dengan URL backend Replit kamu
+const API_URL = "https://your-backend-name.replit.app";
 
-// DOM elements
+// -------------------
+// DOM Elements
+// -------------------
 const blockStatus = document.getElementById("block-status");
 const joinButton = document.getElementById("join-btn");
 const shareButton = document.getElementById("share-btn");
@@ -17,43 +22,42 @@ const chatInput = document.getElementById("chat-input");
 const chatMessages = document.getElementById("chat-messages");
 const leaderboardList = document.getElementById("leaderboard-list");
 
-// state
+// -------------------
+// State
+// -------------------
 let currentBlock = null;
 let userFid = null;
-let ws;
+let socket;
 
-// connect websocket
-function connectWebSocket() {
-  ws = new WebSocket(`${API_URL.replace("http", "ws")}/ws`);
+// -------------------
+// Connect ke backend Replit (Socket.io)
+// -------------------
+function connectSocket() {
+  socket = io(API_URL);
 
-  ws.onopen = () => console.log("✅ WebSocket connected");
-  ws.onclose = () => {
-    console.log("⚠️ WebSocket closed, retrying...");
-    setTimeout(connectWebSocket, 3000);
-  };
-  ws.onmessage = (msg) => {
-    const data = JSON.parse(msg.data);
-    handleWSMessage(data);
-  };
-}
+  socket.on("connect", () => console.log("✅ Connected to backend"));
+  socket.on("disconnect", () => console.log("⚠️ Disconnected"));
 
-function handleWSMessage(data) {
-  if (data.type === "block_update") {
-    currentBlock = data.block;
-    blockStatus.textContent = `Live block: ${data.block.height} | ${data.block.tx_count} TXs`;
-  }
+  // Block updates
+  socket.on("block_update", (block) => {
+    currentBlock = block;
+    blockStatus.textContent = `Live block: ${block.height} | ${block.tx_count} TXs`;
+  });
 
-  if (data.type === "players_update") {
-    renderPlayers(data.players);
-  }
+  // Players updates
+  socket.on("players_update", (players) => {
+    renderPlayers(players);
+  });
 
-  if (data.type === "chat_message") {
+  // Chat messages
+  socket.on("chat_message", (data) => {
     addChatMessage(data.user, data.message);
-  }
+  });
 
-  if (data.type === "leaderboard_update") {
-    renderLeaderboard(data.leaderboard);
-  }
+  // Leaderboard updates
+  socket.on("leaderboard_update", (leaderboard) => {
+    renderLeaderboard(leaderboard);
+  });
 }
 
 function renderPlayers(players) {
@@ -85,7 +89,9 @@ function addChatMessage(user, message) {
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// events
+// -------------------
+// UI Events
+// -------------------
 joinButton.addEventListener("click", async () => {
   if (!userFid) {
     const user = await actions.getUser();
@@ -96,7 +102,7 @@ joinButton.addEventListener("click", async () => {
       return;
     }
   }
-  ws.send(JSON.stringify({ type: "join", fid: userFid }));
+  socket.emit("join", { fid: userFid });
 });
 
 shareButton.addEventListener("click", () => {
@@ -104,44 +110,33 @@ shareButton.addEventListener("click", () => {
 });
 
 prevBlockButton.addEventListener("click", () => {
-  ws.send(JSON.stringify({ type: "get_previous_block" }));
+  socket.emit("get_previous_block");
 });
 
 presentBlockButton.addEventListener("click", () => {
-  ws.send(JSON.stringify({ type: "get_present_block" }));
+  socket.emit("get_present_block");
 });
 
 predictionForm.addEventListener("submit", (e) => {
   e.preventDefault();
   if (!predictionInput.value) return;
-  ws.send(
-    JSON.stringify({
-      type: "prediction",
-      fid: userFid,
-      prediction: predictionInput.value,
-    })
-  );
+  socket.emit("prediction", { fid: userFid, prediction: predictionInput.value });
   predictionInput.value = "";
 });
 
 chatForm.addEventListener("submit", (e) => {
   e.preventDefault();
   if (!chatInput.value) return;
-  ws.send(
-    JSON.stringify({
-      type: "chat_message",
-      fid: userFid,
-      message: chatInput.value,
-    })
-  );
+  socket.emit("chat_message", { fid: userFid, message: chatInput.value });
   chatInput.value = "";
 });
 
-// init
-connectWebSocket();
+// -------------------
+// Init
+// -------------------
+connectSocket();
 
-// 🔥 penting: kasih sinyal ke Farcaster kalau app sudah siap
+// ✅ Wajib: kasih sinyal ke Farcaster kalau app sudah siap
 window.addEventListener("load", () => {
   actions.ready();
 });
-          

@@ -64,6 +64,19 @@ header h1 {
   margin-bottom: 6px;
   background: rgba(255,200,0,0.1);
   animation: fadeIn 0.3s ease;
+  opacity: 0.9;
+}
+
+.chat-time {
+  color: #ffb84d;
+  font-size: 0.75em;
+  margin-right: 5px;
+}
+
+.chat-user {
+  color: #ffcc00;
+  font-weight: 600;
+  margin-right: 5px;
 }
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(5px); }

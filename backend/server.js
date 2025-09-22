@@ -108,13 +108,16 @@ io.on("connection", (socket) => {
     console.log("chat_message", data);
     const profile = data?.profile || {};
     const displayName = profile.displayName || profile.username || data?.fid || "anon";
+    const username = profile.username || null;
     
     io.emit("chat_message", { 
-      user: displayName, 
+      user: displayName,
+      username: username,
       message: data.message,
       type: data.type || "normal",
       timestamp: new Date().toISOString(),
-      fid: data?.fid
+      fid: data?.fid,
+      profile: profile
     });
   });
 

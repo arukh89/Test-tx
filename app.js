@@ -115,7 +115,7 @@ function connectSocket() {
   // Enhanced chat messages with timestamps
   socket.on("chat_message", (data) => {
     const timestamp = data.timestamp ? new Date(data.timestamp) : new Date();
-    addChatMessage(data.user, data.message, timestamp, data.type);
+    addChatMessage(data.user, data.message, timestamp, data.type, data.username);
   });
 
   // Real-time leaderboard updates
@@ -153,7 +153,7 @@ function renderLeaderboard(leaderboard) {
   });
 }
 
-function addChatMessage(user, message, timestamp, type = "normal") {
+function addChatMessage(user, message, timestamp, type = "normal", username = null) {
   const div = document.createElement("div");
   
   // Apply different styles based on message type
@@ -170,11 +170,14 @@ function addChatMessage(user, message, timestamp, type = "normal") {
   
   const timeStr = timestamp ? new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
   
+  // Format user display with username if available
+  const userDisplay = username ? `${user} (@${username})` : user;
+  
   // Different formatting based on message type
   if (type === "system") {
     div.innerHTML = `<span class="chat-time">[${timeStr}]</span> <span class="chat-system-text">${message}</span>`;
   } else {
-    div.innerHTML = `<span class="chat-time">[${timeStr}]</span> <span class="chat-user">${user}:</span> ${message}`;
+    div.innerHTML = `<span class="chat-time">[${timeStr}]</span> <span class="chat-user">${userDisplay}:</span> ${message}`;
   }
   
   chatBox.appendChild(div);

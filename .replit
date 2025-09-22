@@ -6,7 +6,7 @@ expertMode = true
 channel = "stable-25_05"
 
 [workflows]
-runButton = "TX Battle Royale"
+runButton = "Project"
 
 [[workflows.workflow]]
 name = "Project"
@@ -21,13 +21,13 @@ args = "TX Battle Royale"
 name = "TX Battle Royale"
 author = "agent"
 
+[workflows.workflow.metadata]
+outputType = "webview"
+
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npm start"
 waitForPort = 5000
-
-[workflows.workflow.metadata]
-outputType = "webview"
 
 [[ports]]
 localPort = 3001
@@ -36,6 +36,10 @@ externalPort = 3001
 [[ports]]
 localPort = 5000
 externalPort = 80
+
+[[ports]]
+localPort = 39209
+externalPort = 3000
 
 [deployment]
 deploymentTarget = "vm"

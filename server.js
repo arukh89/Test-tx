@@ -1,9 +1,26 @@
 const express = require('express');
 const path = require('path');
 const { createProxyMiddleware } = require('http-proxy-middleware');
+const { spawn } = require('child_process');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Start the backend server
+console.log('Starting backend server...');
+const backend = spawn('node', ['backend/server.js'], {
+  stdio: 'inherit',
+  cwd: __dirname
+});
+
+backend.on('error', (err) => {
+  console.error('Backend server error:', err);
+});
+
+// Give backend time to start
+setTimeout(() => {
+  console.log('Backend should be ready now');
+}, 2000);
 
 // Serve static files from the root directory
 app.use(express.static('.'));

@@ -1,26 +1,26 @@
-// app.js (Frontend - Netlify)
-// Full default logic, connect ke backend Replit
+// app.js (Frontend)
+// Full default logic, connect to backend
 
-import { actions } from "@farcaster/miniapp-sdk";
-
-// Ganti dengan URL backend Replit kamu
-const API_URL = "https://1a4f1f38-1bc5-459f-89d3-7e411642339d-00-8cgu1jweczd6.sisko.replit.dev";
+// Use local backend URL - Replit will proxy appropriately
+const API_URL = window.location.origin;
 
 // -------------------
-// DOM Elements
+// DOM Elements - Updated to match index.html IDs
 // -------------------
-const blockStatus = document.getElementById("block-status");
-const joinButton = document.getElementById("join-btn");
-const shareButton = document.getElementById("share-btn");
-const prevBlockButton = document.getElementById("prev-block-btn");
-const presentBlockButton = document.getElementById("present-block-btn");
-const predictionForm = document.getElementById("prediction-form");
-const predictionInput = document.getElementById("prediction");
-const playersList = document.getElementById("players-list");
-const chatForm = document.getElementById("chat-form");
-const chatInput = document.getElementById("chat-input");
-const chatMessages = document.getElementById("chat-messages");
-const leaderboardList = document.getElementById("leaderboard-list");
+const statusElement = document.getElementById("status");
+const joinButton = document.getElementById("joinBtn");
+const shareButton = document.getElementById("shareBtn");
+const prevBlockButton = document.getElementById("prevBlockBtn");
+const presentBlockButton = document.getElementById("currBlockBtn");
+const predictionInput = document.getElementById("predictionInput");
+const submitPredictionBtn = document.getElementById("submitPrediction");
+const playerCount = document.getElementById("playerCount");
+const playersList = document.getElementById("playerList");
+const chatInput = document.getElementById("chatInput");
+const sendBtn = document.getElementById("sendBtn");
+const chatBox = document.getElementById("chatBox");
+const leaderboardList = document.getElementById("leaderboardList");
+const userStatus = document.getElementById("userStatus");
 
 // -------------------
 // State
@@ -30,23 +30,37 @@ let userFid = null;
 let socket;
 
 // -------------------
-// Connect ke backend Replit (Socket.io)
+// Connect to backend (Socket.io)
 // -------------------
 function connectSocket() {
-  socket = io(API_URL);
+  socket = io(API_URL + "/socket.io/");
 
-  socket.on("connect", () => console.log("✅ Connected to backend"));
-  socket.on("disconnect", () => console.log("⚠️ Disconnected"));
+  socket.on("connect", () => {
+    console.log("✅ Connected to backend");
+    statusElement.textContent = "Connected";
+  });
+  
+  socket.on("disconnect", () => {
+    console.log("⚠️ Disconnected");
+    statusElement.textContent = "Disconnected";
+  });
 
   // Block updates
   socket.on("block_update", (block) => {
     currentBlock = block;
-    blockStatus.textContent = `Live block: ${block.height} | ${block.tx_count} TXs`;
+    statusElement.textContent = `Live block: ${block.height} | ${block.tx_count} TXs`;
   });
 
   // Players updates
   socket.on("players_update", (players) => {
     renderPlayers(players);
+  });
+
+  // Initial state
+  socket.on("state", (data) => {
+    currentBlock = data.block;
+    renderPlayers(data.players);
+    renderLeaderboard(data.leaderboard);
   });
 
   // Chat messages
@@ -62,9 +76,10 @@ function connectSocket() {
 
 function renderPlayers(players) {
   playersList.innerHTML = "";
+  playerCount.textContent = players.length;
   players.forEach((p) => {
     const li = document.createElement("li");
-    li.textContent = `${p.name}: ${p.prediction}`;
+    li.textContent = `${p.name}: ${p.prediction || "No prediction"}`;
     playersList.appendChild(li);
   });
 }
@@ -85,8 +100,8 @@ function addChatMessage(user, message) {
   const div = document.createElement("div");
   div.classList.add("chat-message");
   div.textContent = `${user}: ${message}`;
-  chatMessages.appendChild(div);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
+  chatBox.appendChild(div);
+  chatBox.scrollTop = chatBox.scrollHeight;
 }
 
 // -------------------
@@ -94,19 +109,37 @@ function addChatMessage(user, message) {
 // -------------------
 joinButton.addEventListener("click", async () => {
   if (!userFid) {
-    const user = await actions.getUser();
-    if (user && user.fid) {
-      userFid = user.fid;
-    } else {
-      alert("Please connect your Farcaster wallet!");
-      return;
+    // Try to get Farcaster user info
+    try {
+      if (typeof window.miniApp !== 'undefined' && window.miniApp.actions) {
+        const user = await window.miniApp.actions.getUser();
+        if (user && user.fid) {
+          userFid = user.fid;
+          userStatus.textContent = `Signed in as FID: ${userFid}`;
+        }
+      }
+    } catch (error) {
+      console.log("Farcaster SDK not available, using anonymous user");
+    }
+    
+    if (!userFid) {
+      userFid = "anon_" + Math.random().toString(36).substr(2, 9);
+      userStatus.textContent = `Signed in as ${userFid}`;
     }
   }
   socket.emit("join", { fid: userFid });
 });
 
 shareButton.addEventListener("click", () => {
-  actions.openUrl("https://testtx.netlify.app");
+  if (typeof window.miniApp !== 'undefined' && window.miniApp.actions) {
+    window.miniApp.actions.openUrl(window.location.href);
+  } else {
+    // Fallback for non-Farcaster environments
+    navigator.share?.({ 
+      title: 'TX Battle Royale', 
+      url: window.location.href 
+    }) || alert('Share: ' + window.location.href);
+  }
 });
 
 prevBlockButton.addEventListener("click", () => {
@@ -117,26 +150,48 @@ presentBlockButton.addEventListener("click", () => {
   socket.emit("get_present_block");
 });
 
-predictionForm.addEventListener("submit", (e) => {
-  e.preventDefault();
+submitPredictionBtn.addEventListener("click", () => {
   if (!predictionInput.value) return;
-  socket.emit("prediction", { fid: userFid, prediction: predictionInput.value });
+  if (!userFid) {
+    alert("Please join the battle first!");
+    return;
+  }
+  socket.emit("prediction", { fid: userFid, prediction: parseInt(predictionInput.value) });
   predictionInput.value = "";
 });
 
-chatForm.addEventListener("submit", (e) => {
-  e.preventDefault();
+sendBtn.addEventListener("click", () => {
   if (!chatInput.value) return;
+  if (!userFid) {
+    alert("Please join the battle first!");
+    return;
+  }
   socket.emit("chat_message", { fid: userFid, message: chatInput.value });
   chatInput.value = "";
+});
+
+// Allow Enter key for chat
+chatInput.addEventListener("keypress", (e) => {
+  if (e.key === "Enter") {
+    sendBtn.click();
+  }
+});
+
+// Allow Enter key for prediction
+predictionInput.addEventListener("keypress", (e) => {
+  if (e.key === "Enter") {
+    submitPredictionBtn.click();
+  }
 });
 
 // -------------------
 // Init
 // -------------------
-connectSocket();
-
-// ✅ Wajib: kasih sinyal ke Farcaster kalau app sudah siap
-window.addEventListener("load", () => {
-  actions.ready();
+document.addEventListener("DOMContentLoaded", () => {
+  connectSocket();
+  
+  // Initialize Farcaster SDK if available
+  if (typeof window.miniApp !== 'undefined' && window.miniApp.actions) {
+    window.miniApp.actions.ready();
+  }
 });

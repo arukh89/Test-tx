@@ -68,7 +68,14 @@
     </div>
   </div>
 
+  <script src="/socket.io/socket.io.js"></script>
   <script src="https://unpkg.com/@farcaster/miniapp-sdk/dist/index.umd.js"></script>
+  <script>
+    // Initialize Farcaster SDK
+    if (typeof MiniAppSDK !== 'undefined') {
+      window.miniApp = MiniAppSDK;
+    }
+  </script>
   <script src="app.js"></script>
 </body>
 </html>

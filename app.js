@@ -250,29 +250,56 @@ async function connectFarcasterWallet() {
     // Check if Farcaster SDK is available
     if (typeof window.miniApp !== 'undefined' && window.miniApp.actions) {
       console.log("🎭 Farcaster SDK available, attempting connection...");
+      console.log("Available actions:", Object.keys(window.miniApp.actions));
       
-      // Get user profile data
-      const user = await window.miniApp.actions.getUser();
-      console.log("👤 Farcaster user data:", user);
-      
-      if (user && user.fid) {
-        userFid = user.fid;
-        userProfile = {
-          fid: user.fid,
-          username: user.username || `fid_${user.fid}`,
-          displayName: user.displayName || user.username || `User ${user.fid}`,
-          pfpUrl: user.pfpUrl || null,
-          bio: user.bio || null
-        };
+      // Try to get user data
+      if (typeof window.miniApp.actions.getUser === 'function') {
+        const user = await window.miniApp.actions.getUser();
+        console.log("👤 Farcaster user data:", user);
         
-        updateWalletUI(true);
-        console.log("✅ Farcaster wallet connected:", userProfile);
-        
-        return true;
-      } else {
-        console.log("❌ No Farcaster user data received");
-        throw new Error("No user data from Farcaster");
+        if (user && (user.fid || user.id)) {
+          const fid = user.fid || user.id;
+          userFid = fid.toString();
+          userProfile = {
+            fid: userFid,
+            username: user.username || user.handle || `fid_${userFid}`,
+            displayName: user.displayName || user.name || user.username || `User ${userFid}`,
+            pfpUrl: user.pfpUrl || user.avatar || user.profileImage || null,
+            bio: user.bio || user.description || null
+          };
+          
+          updateWalletUI(true);
+          console.log("✅ Farcaster wallet connected:", userProfile);
+          
+          return true;
+        }
       }
+      
+      // Try alternative methods if getUser doesn't work
+      if (typeof window.miniApp.actions.getUserProfile === 'function') {
+        const profile = await window.miniApp.actions.getUserProfile();
+        console.log("👤 Farcaster profile data:", profile);
+        
+        if (profile && (profile.fid || profile.id)) {
+          const fid = profile.fid || profile.id;
+          userFid = fid.toString();
+          userProfile = {
+            fid: userFid,
+            username: profile.username || `fid_${userFid}`,
+            displayName: profile.displayName || profile.username || `User ${userFid}`,
+            pfpUrl: profile.pfpUrl || null,
+            bio: profile.bio || null
+          };
+          
+          updateWalletUI(true);
+          console.log("✅ Farcaster profile connected:", userProfile);
+          
+          return true;
+        }
+      }
+      
+      console.log("❌ No valid user data from Farcaster SDK");
+      throw new Error("No valid user data from Farcaster");
     } else {
       console.log("🚫 Farcaster SDK not available");
       throw new Error("Farcaster SDK not available");
@@ -437,7 +464,28 @@ predictionInput.addEventListener("keypress", (e) => {
 // Init
 // -------------------
 document.addEventListener("DOMContentLoaded", () => {
+  console.log("🎮 TX Battle Royale initializing...");
+  
+  // Start socket connection
   connectSocket();
+  
   // Initialize wallet UI
   updateWalletUI(false);
+  
+  // Auto-connect Farcaster if available (for mini app context)
+  setTimeout(async () => {
+    if (typeof window.miniApp !== 'undefined' && window.miniApp.actions) {
+      console.log("🔄 Auto-connecting Farcaster wallet...");
+      const connected = await connectFarcasterWallet();
+      if (connected) {
+        console.log("🎭 Auto-connected to Farcaster successfully");
+        // Auto-join game if connected
+        if (isConnected && socket) {
+          socket.emit("join", { fid: userFid, profile: userProfile });
+        }
+      }
+    }
+  }, 1000);
+  
+  console.log("✅ TX Battle Royale initialization complete");
 });

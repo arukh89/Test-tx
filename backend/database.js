@@ -1,4 +1,8 @@
-const { Pool } = require('@neondatabase/serverless');
+const { Pool, neonConfig } = require('@neondatabase/serverless');
+const ws = require('ws');
+
+// Configure WebSocket for Neon serverless
+neonConfig.webSocketConstructor = ws;
 
 if (!process.env.DATABASE_URL) {
   throw new Error("DATABASE_URL must be set. Did you forget to provision a database?");
@@ -103,7 +107,7 @@ class PlayerDatabase {
           games_played,
           correct_predictions,
           CASE 
-            WHEN games_played > 0 THEN ROUND((correct_predictions::float / games_played * 100), 1)
+            WHEN games_played > 0 THEN ROUND((correct_predictions::float / games_played * 100)::numeric, 1)
             ELSE 0 
           END as accuracy_percentage
         FROM players 

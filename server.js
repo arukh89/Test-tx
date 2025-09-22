@@ -17,10 +17,10 @@ backend.on('error', (err) => {
   console.error('Backend server error:', err);
 });
 
-// Give backend time to start
+// Give backend more time to start and become ready
 setTimeout(() => {
   console.log('Backend should be ready now');
-}, 2000);
+}, 5000);
 
 // Serve static files from the root directory
 app.use(express.static('.'));

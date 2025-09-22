@@ -3,77 +3,67 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>TX Battle Royale — Client</title>
+  <title>TX Battle Royale — BTC Transaction</title>
 
-  <!-- ✅ Open Graph tags untuk Farcaster Embed -->
+  <!-- Open Graph untuk embed -->
   <meta property="og:title" content="TX Battle Royale" />
-  <meta property="og:description" content="Predict Bitcoin block TX count & battle with friends" />
+  <meta property="og:description" content="Predict Bitcoin block TX count & battle with friends in real time!" />
   <meta property="og:image" content="https://testtx.netlify.app/og.png" />
   <meta property="og:url" content="https://testtx.netlify.app/" />
   <meta property="og:type" content="website" />
 
-  <!-- ✅ Farcaster Frame -->
-  <meta name="fc:frame" content="vNext" />
+  <!-- Farcaster MiniApp Embed -->
+  <meta name="fc:miniapp" content='{
+    "version": "1",
+    "imageUrl": "https://testtx.netlify.app/og.png",
+    "button": {
+      "title": "Open App",
+      "action": {
+        "type": "launch_frame",
+        "name": "TX Battle Royale",
+        "url": "https://testtx.netlify.app/",
+        "splashImageUrl": "https://testtx.netlify.app/og.png",
+        "splashBackgroundColor": "#1a1a4a"
+      }
+    }
+  }' />
 
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div id="app" class="container">
-    <header>
-      <h1>TX Battle Royale ⚡</h1>
-      <div class="subtitle">Predict the number of transactions in the next Bitcoin block</div>
-    </header>
+  <div id="app">
+    <h1>TX Battle Royale</h1>
+    <p>Status: <span id="status">Connecting...</span></p>
+    <p>Signed in as <span id="userName">Not signed</span></p>
 
-    <main class="grid">
-      <section>
-        <div class="card">
-          <div id="status" class="status">Connecting...</div>
+    <div class="chat-box">
+      <div id="chatMessages" class="chat-messages"></div>
+      <input id="chatInput" placeholder="Type a message..." />
+      <button id="sendMessage">Send</button>
+    </div>
 
-          <div class="controls">
-            <button id="joinButton" class="cta">Join Battle</button>
-            <button id="shareBtn" class="cta">Share</button>
-            <button id="prevBlockBtn" class="cta">Previous Block</button>
-            <button id="presentBlockBtn" class="cta">Present Block</button>
-          </div>
+    <div class="prediction-box">
+      <input id="predictionInput" type="number" placeholder="Your TX guess" />
+      <button id="submitPrediction">Submit Prediction</button>
+    </div>
 
-          <div class="prediction">
-            <label>Your prediction</label>
-            <div class="row">
-              <input id="predictionInput" type="number" placeholder="e.g. 2500" />
-              <button id="submitPrediction" class="cta">Submit</button>
-            </div>
-          </div>
+    <div class="controls">
+      <button id="joinButton">Join Battle</button>
+      <button id="shareBtn">Share</button>
+      <button id="prevBlockBtn">⬅️ Previous Block</button>
+      <button id="presentBlockBtn">📦 Present Block</button>
+    </div>
 
-          <div class="card smallcard">
-            <div class="small muted">Players (<span id="playersCount">0</span>)</div>
-            <ul id="playersList"></ul>
-          </div>
-        </div>
-
-        <div class="card chat">
-          <div class="small muted">Chat</div>
-          <div id="chatMessages" class="chatBox"></div>
-          <div class="row">
-            <input id="chatInput" placeholder="Say something..." />
-            <button id="sendMessage" class="cta">Send</button>
-          </div>
-        </div>
-      </section>
-
-      <aside>
-        <div class="card leaderboard">
-          <h2>Leaderboard</h2>
-          <ul id="leaderboardList"></ul>
-          <div class="small muted">Signed in as <span id="userName">Not signed</span></div>
-        </div>
-      </aside>
-    </main>
+    <div class="leaderboard">
+      <h2>Leaderboard</h2>
+      <ul id="leaderboardList"></ul>
+    </div>
   </div>
 
-  <!-- ✅ Socket.IO -->
+  <!-- Socket.IO -->
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 
-  <!-- ✅ Farcaster MiniApp SDK -->
+  <!-- Farcaster MiniApp SDK -->
   <script src="https://unpkg.com/@farcaster/miniapp/dist/index.umd.js"></script>
 
   <!-- Config & App -->

@@ -10,12 +10,15 @@ TX Battle Royale is a real-time Bitcoin transaction prediction game where users 
 - **External API**: mempool.space for Bitcoin block data
 
 ## Recent Changes (Sept 22, 2025)
-- Set up Replit environment with Node.js 18
-- Configured frontend server with proxy to backend
-- Set up single workflow that manages both frontend and backend servers
-- Configured deployment for VM target to support persistent connections
-- Frontend serves on port 5000 (0.0.0.0) for Replit proxy compatibility
-- Backend runs on port 3001 (localhost) with CORS enabled
+- Successfully imported from GitHub (arukh89/Test-tx) and configured for Replit environment
+- Enhanced Farcaster Mini App integration with proper SDK setup
+- Implemented enhanced wallet connection with user profile retrieval
+- Added realtime player synchronization with improved data flow  
+- Enhanced Socket.IO with reconnection logic and error handling
+- Fixed all hardcoded URLs to use current Replit domain
+- Added proper chat timestamps and enhanced UI feedback
+- Configured VM deployment for persistent WebSocket connections
+- All static assets (icons, images) properly served
 
 ## File Structure
 ```

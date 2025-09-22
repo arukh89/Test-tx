@@ -1,111 +1,147 @@
-import { sdk } from "@farcaster/miniapp-sdk";
+// app.js
+import { actions } from "@farcaster/miniapp-sdk";
 
-// ✅ Panggil ready() biar splash screen hilang
-sdk.actions.ready();
+const API_URL = "https://YOUR-BACKEND-URL"; // ganti dengan URL backend kamu
 
-let socket;
-const statusEl = document.getElementById("status");
-const playerList = document.getElementById("playerList");
-const playerCount = document.getElementById("playerCount");
-const chatBox = document.getElementById("chatBox");
-const leaderboardList = document.getElementById("leaderboardList");
-const userStatus = document.getElementById("userStatus");
+// DOM elements
+const blockStatus = document.getElementById("block-status");
+const joinButton = document.getElementById("join-btn");
+const shareButton = document.getElementById("share-btn");
+const prevBlockButton = document.getElementById("prev-block-btn");
+const presentBlockButton = document.getElementById("present-block-btn");
+const predictionForm = document.getElementById("prediction-form");
+const predictionInput = document.getElementById("prediction");
+const playersList = document.getElementById("players-list");
+const chatForm = document.getElementById("chat-form");
+const chatInput = document.getElementById("chat-input");
+const chatMessages = document.getElementById("chat-messages");
+const leaderboardList = document.getElementById("leaderboard-list");
 
-// Connect ke backend Replit kamu
-function connectSocket() {
-  socket = new WebSocket("wss://YOUR_REPLIT_URL_HERE");
+// state
+let currentBlock = null;
+let userFid = null;
+let ws;
 
-  socket.onopen = () => {
-    statusEl.textContent = "Connected to live Bitcoin blocks!";
+// connect websocket
+function connectWebSocket() {
+  ws = new WebSocket(`${API_URL.replace("http", "ws")}/ws`);
+
+  ws.onopen = () => console.log("✅ WebSocket connected");
+  ws.onclose = () => {
+    console.log("⚠️ WebSocket closed, retrying...");
+    setTimeout(connectWebSocket, 3000);
   };
-
-  socket.onmessage = (event) => {
-    const data = JSON.parse(event.data);
-
-    if (data.type === "block") {
-      statusEl.textContent = `Live block: ${data.height} | ${data.txCount} TXs`;
-    }
-
-    if (data.type === "players") {
-      playerCount.textContent = data.players.length;
-      playerList.innerHTML = "";
-      data.players.forEach(p => {
-        const li = document.createElement("li");
-        li.textContent = p;
-        playerList.appendChild(li);
-      });
-    }
-
-    if (data.type === "chat") {
-      appendChatMessage(data.username, data.message, data.chatType || "chat-normal");
-    }
-
-    if (data.type === "leaderboard") {
-      leaderboardList.innerHTML = "";
-      data.leaderboard.forEach((entry, i) => {
-        const li = document.createElement("li");
-        if (i === 0) li.classList.add("gold");
-        if (i === 1) li.classList.add("silver");
-        if (i === 2) li.classList.add("bronze");
-        li.innerHTML = `<span>${entry.user}</span><span>${entry.score}</span>`;
-        leaderboardList.appendChild(li);
-      });
-    }
-  };
-
-  socket.onclose = () => {
-    statusEl.textContent = "Disconnected. Reconnecting...";
-    setTimeout(connectSocket, 3000);
+  ws.onmessage = (msg) => {
+    const data = JSON.parse(msg.data);
+    handleWSMessage(data);
   };
 }
-connectSocket();
 
-function appendChatMessage(user, message, type) {
+function handleWSMessage(data) {
+  if (data.type === "block_update") {
+    currentBlock = data.block;
+    blockStatus.textContent = `Live block: ${data.block.height} | ${data.block.tx_count} TXs`;
+  }
+
+  if (data.type === "players_update") {
+    renderPlayers(data.players);
+  }
+
+  if (data.type === "chat_message") {
+    addChatMessage(data.user, data.message);
+  }
+
+  if (data.type === "leaderboard_update") {
+    renderLeaderboard(data.leaderboard);
+  }
+}
+
+function renderPlayers(players) {
+  playersList.innerHTML = "";
+  players.forEach((p) => {
+    const li = document.createElement("li");
+    li.textContent = `${p.name}: ${p.prediction}`;
+    playersList.appendChild(li);
+  });
+}
+
+function renderLeaderboard(leaderboard) {
+  leaderboardList.innerHTML = "";
+  leaderboard.forEach((entry, index) => {
+    const li = document.createElement("li");
+    if (index === 0) li.classList.add("gold");
+    else if (index === 1) li.classList.add("silver");
+    else if (index === 2) li.classList.add("bronze");
+    li.textContent = `${entry.name} — ${entry.score} pts`;
+    leaderboardList.appendChild(li);
+  });
+}
+
+function addChatMessage(user, message) {
   const div = document.createElement("div");
-  div.classList.add(type);
-  div.innerHTML = `<strong>${user}:</strong> ${message}`;
-  chatBox.appendChild(div);
-  chatBox.scrollTop = chatBox.scrollHeight;
+  div.classList.add("chat-message");
+  div.textContent = `${user}: ${message}`;
+  chatMessages.appendChild(div);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-document.getElementById("joinBtn").onclick = () => {
-  socket.send(JSON.stringify({ type: "join" }));
-};
-
-document.getElementById("submitPrediction").onclick = () => {
-  const guess = document.getElementById("predictionInput").value;
-  if (guess) {
-    socket.send(JSON.stringify({ type: "prediction", value: guess }));
-    appendChatMessage("You", `Predicted ${guess} TXs`, "chat-prediction");
-    document.getElementById("predictionInput").value = "";
+// events
+joinButton.addEventListener("click", async () => {
+  if (!userFid) {
+    const user = await actions.getUser();
+    if (user && user.fid) {
+      userFid = user.fid;
+    } else {
+      alert("Please connect your Farcaster wallet!");
+      return;
+    }
   }
-};
-
-document.getElementById("sendBtn").onclick = () => {
-  const msg = document.getElementById("chatInput").value;
-  if (msg) {
-    socket.send(JSON.stringify({ type: "chat", message: msg }));
-    appendChatMessage("You", msg, "chat-normal");
-    document.getElementById("chatInput").value = "";
-  }
-};
-
-document.getElementById("prevBlockBtn").onclick = () => {
-  socket.send(JSON.stringify({ type: "getPrevBlock" }));
-};
-
-document.getElementById("currBlockBtn").onclick = () => {
-  socket.send(JSON.stringify({ type: "getCurrBlock" }));
-};
-
-document.getElementById("shareBtn").onclick = () => {
-  sdk.actions.openUrl("https://warpcast.com/~/compose?text=Join%20TX%20Battle%20Royale!");
-};
-
-sdk.actions.getUser().then(user => {
-  if (user && user.username) {
-    userStatus.textContent = `Signed in as ${user.username}`;
-  }
-}).catch(() => {
-  userStatus.textContent = "Signed in as Not signed";
+  ws.send(JSON.stringify({ type: "join", fid: userFid }));
 });
+
+shareButton.addEventListener("click", () => {
+  actions.openUrl("https://testtx.netlify.app");
+});
+
+prevBlockButton.addEventListener("click", () => {
+  ws.send(JSON.stringify({ type: "get_previous_block" }));
+});
+
+presentBlockButton.addEventListener("click", () => {
+  ws.send(JSON.stringify({ type: "get_present_block" }));
+});
+
+predictionForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  if (!predictionInput.value) return;
+  ws.send(
+    JSON.stringify({
+      type: "prediction",
+      fid: userFid,
+      prediction: predictionInput.value,
+    })
+  );
+  predictionInput.value = "";
+});
+
+chatForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  if (!chatInput.value) return;
+  ws.send(
+    JSON.stringify({
+      type: "chat_message",
+      fid: userFid,
+      message: chatInput.value,
+    })
+  );
+  chatInput.value = "";
+});
+
+// init
+connectWebSocket();
+
+// 🔥 penting: kasih sinyal ke Farcaster kalau app sudah siap
+window.addEventListener("load", () => {
+  actions.ready();
+});
+          

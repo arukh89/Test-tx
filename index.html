@@ -31,34 +31,47 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div id="app">
+  <header>
     <h1>TX Battle Royale</h1>
     <p>Status: <span id="status">Connecting...</span></p>
-    <p>Signed in as <span id="userName">Not signed</span></p>
+  </header>
 
-    <div class="chat-box">
-      <div id="chatMessages" class="chat-messages"></div>
-      <input id="chatInput" placeholder="Type a message..." />
-      <button id="sendMessage">Send</button>
-    </div>
+  <main class="grid">
+    <!-- Kiri: gameplay -->
+    <section class="card">
+      <h2>Battle Arena</h2>
+      <div class="controls">
+        <button id="joinButton">Join Battle</button>
+        <button id="shareBtn">Share</button>
+        <button id="prevBlockBtn">⬅️ Previous Block</button>
+        <button id="presentBlockBtn">📦 Present Block</button>
+      </div>
 
-    <div class="prediction-box">
-      <input id="predictionInput" type="number" placeholder="Your TX guess" />
-      <button id="submitPrediction">Submit Prediction</button>
-    </div>
+      <div class="prediction-box">
+        <input id="predictionInput" type="number" placeholder="Your TX guess" />
+        <button id="submitPrediction">Submit Prediction</button>
+      </div>
 
-    <div class="controls">
-      <button id="joinButton">Join Battle</button>
-      <button id="shareBtn">Share</button>
-      <button id="prevBlockBtn">⬅️ Previous Block</button>
-      <button id="presentBlockBtn">📦 Present Block</button>
-    </div>
+      <div class="players-box">
+        <h3>Players (<span id="playersCount">0</span>)</h3>
+        <ul id="playersList"></ul>
+      </div>
 
-    <div class="leaderboard">
+      <div class="chat-box">
+        <h3>Chat</h3>
+        <div id="chatMessages" class="chat-messages"></div>
+        <input id="chatInput" placeholder="Type a message..." />
+        <button id="sendMessage">Send</button>
+      </div>
+    </section>
+
+    <!-- Kanan: leaderboard -->
+    <aside class="card">
       <h2>Leaderboard</h2>
       <ul id="leaderboardList"></ul>
-    </div>
-  </div>
+      <p>Signed in as <span id="userName">Not signed</span></p>
+    </aside>
+  </main>
 
   <!-- Socket.IO -->
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>

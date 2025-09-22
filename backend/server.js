@@ -1,95 +1,138 @@
+// server.js (Backend Hybrid - Replit)
+// Support "state" (versi lama) + granular events (versi baru)
+
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
+const fetch = require("node-fetch");
 const cors = require("cors");
-const fetch = require("node-fetch"); // npm install node-fetch
 
 const app = express();
 app.use(cors());
-app.get("/", (req, res) => {
-  res.send("TX Battle Royale Backend is running ✅ (mempool.space connected)");
-});
 
-// buat server HTTP
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: { origin: "*" }
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
 });
 
-const PORT = process.env.PORT || 3000;
-
-// ---- Game State ----
+// -------------------
+// State
+// -------------------
 let players = [];
 let leaderboard = [];
-let currentBlock = { height: 0, tx_count: 0 };
-let previousBlock = { height: 0, tx_count: 0 };
+let currentBlock = null;
+let previousBlock = null;
 
-// ---- Socket Events ----
-io.on("connection", (socket) => {
-  console.log("🔥 Client connected:", socket.id);
-
-  // kirim state awal
-  socket.emit("state", { players, leaderboard, currentBlock });
-
-  // join battle
-  socket.on("join", (data) => {
-    const newPlayer = { id: socket.id, display: data.display, guess: null };
-    players.push(newPlayer);
-    io.emit("state", { players, leaderboard, currentBlock });
-    io.emit("chat", `👋 ${data.display} joined the battle`);
-  });
-
-  // receive prediction
-  socket.on("prediction", (data) => {
-    players = players.map(p =>
-      p.id === socket.id ? { ...p, guess: data.guess } : p
-    );
-    io.emit("state", { players, leaderboard, currentBlock });
-  });
-
-  // chat
-  socket.on("chat", (msg) => {
-    io.emit("chat", msg);
-  });
-
-  // disconnect
-  socket.on("disconnect", () => {
-    players = players.filter(p => p.id !== socket.id);
-    io.emit("state", { players, leaderboard, currentBlock });
-    console.log("❌ Client disconnected:", socket.id);
-  });
-});
-
-// ---- Ambil block asli dari mempool.space ----
-async function updateBlock() {
+// -------------------
+// Fetch Bitcoin Block (mempool.space API)
+// -------------------
+async function fetchBlocks() {
   try {
-    const blocks = await fetch("https://mempool.space/api/blocks").then(r => r.json());
-    if (blocks && blocks.length > 1) {
-      const latest = blocks[0];
-      const prev = blocks[1];
-
-      previousBlock = {
-        height: prev.height,
-        tx_count: prev.tx_count || 0
-      };
+    const res = await fetch("https://mempool.space/api/blocks");
+    const data = await res.json();
+    if (data && data.length > 0) {
       currentBlock = {
-        height: latest.height,
-        tx_count: latest.tx_count || 0
+        height: data[0].height,
+        tx_count: data[0].tx_count
       };
+      if (data.length > 1) {
+        previousBlock = {
+          height: data[1].height,
+          tx_count: data[1].tx_count
+        };
+      }
 
-      io.emit("state", { players, leaderboard, currentBlock });
-      console.log(`📦 Block updated: #${currentBlock.height} (${currentBlock.tx_count} txs)`);
+      // 🔹 Emit granular event
+      io.emit("block_update", currentBlock);
+
+      // 🔹 Emit state event (lama)
+      io.emit("state", {
+        block: currentBlock,
+        previousBlock,
+        players,
+        leaderboard
+      });
     }
   } catch (err) {
-    console.error("❌ Error fetching mempool.space data:", err);
+    console.error("Error fetch blocks:", err);
   }
 }
 
-// update setiap 30 detik
-setInterval(updateBlock, 30000);
-updateBlock(); // jalan pertama kali
+// update tiap 30 detik
+setInterval(fetchBlocks, 30000);
+fetchBlocks();
 
-// ---- Start Server ----
+// -------------------
+// Socket.io Logic
+// -------------------
+io.on("connection", (socket) => {
+  console.log("✅ Client connected");
+
+  // join
+  socket.on("join", ({ fid, name }) => {
+    if (!players.find((p) => p.fid === fid)) {
+      players.push({ fid, name: name || `User-${fid}`, prediction: null, score: 0 });
+    }
+
+    // granular
+    io.emit("players_update", players);
+    // state
+    io.emit("state", { block: currentBlock, previousBlock, players, leaderboard });
+  });
+
+  // prediction
+  socket.on("prediction", ({ fid, prediction }) => {
+    players = players.map((p) =>
+      p.fid === fid ? { ...p, prediction } : p
+    );
+    io.emit("players_update", players);
+    io.emit("state", { block: currentBlock, previousBlock, players, leaderboard });
+  });
+
+  // chat
+  socket.on("chat_message", ({ fid, message }) => {
+    const player = players.find((p) => p.fid === fid);
+    const name = player ? player.name : `User-${fid}`;
+    io.emit("chat_message", { user: name, message });
+  });
+
+  // update score (leaderboard)
+  socket.on("update_score", ({ fid, points }) => {
+    players = players.map((p) =>
+      p.fid === fid ? { ...p, score: p.score + points } : p
+    );
+    leaderboard = [...players].sort((a, b) => b.score - a.score);
+
+    io.emit("leaderboard_update", leaderboard);
+    io.emit("state", { block: currentBlock, previousBlock, players, leaderboard });
+  });
+
+  // previous block
+  socket.on("get_previous_block", () => {
+    if (previousBlock) {
+      socket.emit("block_update", previousBlock);
+    }
+  });
+
+  // present block
+  socket.on("get_present_block", () => {
+    if (currentBlock) {
+      socket.emit("block_update", currentBlock);
+    }
+  });
+
+  socket.on("disconnect", () => {
+    console.log("❌ Client disconnected");
+  });
+});
+
+// -------------------
+// Start server
+// -------------------
+const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🚀 Backend running on port ${PORT}`);
 });

@@ -4,7 +4,17 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>TX Battle Royale — Client</title>
+
+  <!-- ✅ Open Graph tags untuk Farcaster Embed -->
+  <meta property="og:title" content="TX Battle Royale" />
+  <meta property="og:description" content="Predict Bitcoin block TX count & battle with friends" />
+  <meta property="og:image" content="https://testtx.netlify.app/og.png" />
+  <meta property="og:url" content="https://testtx.netlify.app/" />
+  <meta property="og:type" content="website" />
+
+  <!-- ✅ Farcaster Frame -->
   <meta name="fc:frame" content="vNext" />
+
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -60,7 +70,13 @@
     </main>
   </div>
 
+  <!-- ✅ Socket.IO -->
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
+  <!-- ✅ Farcaster MiniApp SDK -->
+  <script src="https://unpkg.com/@farcaster/miniapp/dist/index.umd.js"></script>
+
+  <!-- Config & App -->
   <script src="config.js"></script>
   <script src="app.js"></script>
 </body>

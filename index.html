@@ -76,9 +76,28 @@
   <script src="/socket.io/socket.io.js"></script>
   <script src="https://unpkg.com/@farcaster/miniapp-sdk/dist/index.umd.js"></script>
   <script>
-    // Initialize Farcaster SDK
+    // Initialize Farcaster SDK and call ready immediately
+    console.log("🎭 Loading Farcaster SDK...");
+    
     if (typeof MiniAppSDK !== 'undefined') {
       window.miniApp = MiniAppSDK;
+      console.log("✅ Farcaster SDK loaded successfully");
+      
+      // Call ready immediately to hide splash screen
+      try {
+        if (MiniAppSDK.actions && MiniAppSDK.actions.ready) {
+          console.log("🚀 Calling MiniAppSDK.actions.ready()");
+          MiniAppSDK.actions.ready();
+        }
+      } catch (error) {
+        console.error("Error calling MiniAppSDK.actions.ready():", error);
+      }
+    } else {
+      console.log("⚠️ MiniAppSDK not available");
+      // Signal ready via postMessage as fallback
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'miniapp_ready' }, '*');
+      }
     }
   </script>
   <script src="app.js"></script>

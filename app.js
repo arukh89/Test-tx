@@ -114,7 +114,8 @@ function connectSocket() {
 
   // Enhanced chat messages with timestamps
   socket.on("chat_message", (data) => {
-    addChatMessage(data.user, data.message, new Date());
+    const timestamp = data.timestamp ? new Date(data.timestamp) : new Date();
+    addChatMessage(data.user, data.message, timestamp, data.type);
   });
 
   // Real-time leaderboard updates
@@ -129,7 +130,13 @@ function renderPlayers(players) {
   playerCount.textContent = players.length;
   players.forEach((p) => {
     const li = document.createElement("li");
-    li.textContent = `${p.name}: ${p.prediction || "No prediction"}`;
+    const displayName = p.name || p.fid || "Unknown";
+    const prediction = p.prediction ? `${p.prediction} TXs` : "No prediction";
+    
+    // Show Farcaster username if available
+    const usernameInfo = p.profile?.username ? ` (@${p.profile.username})` : "";
+    
+    li.innerHTML = `<span class="player-name">${displayName}${usernameInfo}</span>: <span class="player-prediction">${prediction}</span>`;
     playersList.appendChild(li);
   });
 }
@@ -146,17 +153,35 @@ function renderLeaderboard(leaderboard) {
   });
 }
 
-function addChatMessage(user, message, timestamp) {
+function addChatMessage(user, message, timestamp, type = "normal") {
   const div = document.createElement("div");
-  div.classList.add("chat-message", "chat-normal");
+  
+  // Apply different styles based on message type
+  switch(type) {
+    case "prediction":
+      div.classList.add("chat-message", "chat-prediction");
+      break;
+    case "system":
+      div.classList.add("chat-message", "chat-system");
+      break;
+    default:
+      div.classList.add("chat-message", "chat-normal");
+  }
   
   const timeStr = timestamp ? new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
-  div.innerHTML = `<span class="chat-time">[${timeStr}]</span> <span class="chat-user">${user}:</span> ${message}`;
+  
+  // Different formatting based on message type
+  if (type === "system") {
+    div.innerHTML = `<span class="chat-time">[${timeStr}]</span> <span class="chat-system-text">${message}</span>`;
+  } else {
+    div.innerHTML = `<span class="chat-time">[${timeStr}]</span> <span class="chat-user">${user}:</span> ${message}`;
+  }
   
   chatBox.appendChild(div);
   chatBox.scrollTop = chatBox.scrollHeight;
   
   // Add a subtle animation
+  div.style.opacity = '0';
   setTimeout(() => div.style.opacity = '1', 10);
 }
 
@@ -265,8 +290,24 @@ submitPredictionBtn.addEventListener("click", () => {
     alert("Please join the battle first!");
     return;
   }
-  socket.emit("prediction", { fid: userFid, prediction: parseInt(predictionInput.value) });
+  
+  const prediction = parseInt(predictionInput.value);
+  socket.emit("prediction", { fid: userFid, prediction: prediction, profile: userProfile });
+  
+  // Auto-post to chat when prediction is submitted
+  const displayName = userProfile?.displayName || userProfile?.username || userFid;
+  const chatMessage = `🎯 ${displayName} predicted ${prediction} transactions for the next block!`;
+  socket.emit("chat_message", { fid: userFid, message: chatMessage, profile: userProfile, type: "prediction" });
+  
   predictionInput.value = "";
+  
+  // Visual feedback
+  submitPredictionBtn.textContent = "Submitted!";
+  submitPredictionBtn.disabled = true;
+  setTimeout(() => {
+    submitPredictionBtn.textContent = "Submit Prediction";
+    submitPredictionBtn.disabled = false;
+  }, 1500);
 });
 
 sendBtn.addEventListener("click", () => {
@@ -275,7 +316,7 @@ sendBtn.addEventListener("click", () => {
     alert("Please join the battle first!");
     return;
   }
-  socket.emit("chat_message", { fid: userFid, message: chatInput.value });
+  socket.emit("chat_message", { fid: userFid, message: chatInput.value, profile: userProfile });
   chatInput.value = "";
 });
 
@@ -299,8 +340,19 @@ predictionInput.addEventListener("keypress", (e) => {
 document.addEventListener("DOMContentLoaded", () => {
   connectSocket();
   
-  // Initialize Farcaster SDK if available
-  if (typeof window.miniApp !== 'undefined' && window.miniApp.actions) {
-    window.miniApp.actions.ready();
+  // Always call ready() to hide splash screen - this is required for Farcaster Mini Apps
+  try {
+    if (typeof window.miniApp !== 'undefined' && window.miniApp.actions) {
+      console.log("🎭 Calling Farcaster SDK ready()");
+      window.miniApp.actions.ready();
+    } else {
+      // Fallback for when SDK is not available
+      console.log("🚫 Farcaster SDK not available, attempting window.parent ready signal");
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'ready' }, '*');
+      }
+    }
+  } catch (error) {
+    console.error("Error calling ready():", error);
   }
 });

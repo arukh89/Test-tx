@@ -54,17 +54,51 @@ io.on("connection", (socket) => {
   // --- Core handlers ---
   socket.on("join", (data) => {
     console.log("join", data);
-    players.push({ name: data?.fid || "anon", prediction: null });
+    const profile = data?.profile || {};
+    const displayName = profile.displayName || profile.username || data?.fid || "anon";
+    
+    // Check if player already exists, update if so, otherwise add new player
+    const existingPlayerIndex = players.findIndex(p => p.fid === data?.fid);
+    if (existingPlayerIndex >= 0) {
+      players[existingPlayerIndex] = { 
+        fid: data?.fid || "anon", 
+        name: displayName,
+        prediction: players[existingPlayerIndex].prediction,
+        profile: profile
+      };
+    } else {
+      players.push({ 
+        fid: data?.fid || "anon", 
+        name: displayName, 
+        prediction: null,
+        profile: profile
+      });
+    }
+    
     io.emit("players_update", players);
     socket.emit("state", { block: currentBlock, players, leaderboard });
+    
+    // Welcome message to chat
+    const welcomeMessage = `🎮 ${displayName} joined the battle!`;
+    io.emit("chat_message", { 
+      user: displayName, 
+      message: welcomeMessage, 
+      type: "system",
+      timestamp: new Date().toISOString()
+    });
   });
 
   socket.on("prediction", (data) => {
     console.log("prediction", data);
     if (!data?.fid) return;
-    const player = players.find((p) => p.name === data.fid);
+    const player = players.find((p) => p.fid === data.fid);
     if (player) {
       player.prediction = data.prediction;
+      // Update profile if provided
+      if (data.profile) {
+        player.profile = data.profile;
+        player.name = data.profile.displayName || data.profile.username || data.fid;
+      }
     }
     io.emit("players_update", players);
     updateLeaderboard();
@@ -72,7 +106,16 @@ io.on("connection", (socket) => {
 
   socket.on("chat_message", (data) => {
     console.log("chat_message", data);
-    io.emit("chat_message", { user: data?.fid || "anon", message: data.message });
+    const profile = data?.profile || {};
+    const displayName = profile.displayName || profile.username || data?.fid || "anon";
+    
+    io.emit("chat_message", { 
+      user: displayName, 
+      message: data.message,
+      type: data.type || "normal",
+      timestamp: new Date().toISOString(),
+      fid: data?.fid
+    });
   });
 
   socket.on("get_previous_block", () => {

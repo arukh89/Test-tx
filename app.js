@@ -68,24 +68,31 @@ function connectSocket() {
   socket.on("connect", () => console.log("✅ Connected to backend"));
   socket.on("disconnect", () => console.log("⚠️ Disconnected"));
 
+  // Block updates
   socket.on("block_update", (block) => {
     currentBlock = block;
     blockStatus.textContent = `Live block: ${block.height} | ${block.tx_count} TXs`;
   });
 
+  // Players updates
   socket.on("players_update", (players) => {
     renderPlayers(players);
   });
 
+  // Chat messages
   socket.on("chat_message", (data) => {
     addChatMessage(data.user, data.message);
   });
 
+  // Leaderboard updates
   socket.on("leaderboard_update", (leaderboard) => {
     renderLeaderboard(leaderboard);
   });
 }
 
+// -------------------
+// Render functions
+// -------------------
 function renderPlayers(players) {
   playersList.innerHTML = "";
   players.forEach((p) => {

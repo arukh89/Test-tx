@@ -4,22 +4,23 @@
     "payload": "eyJkb21haW4iOiJ0ZXN0dHgubmV0bGlmeS5hcHAifQ",
     "signature": "MHgzYTQyYTU4YjcwY2U0ZmI3NWRjNTJiNzUzNGM3YWZmNjkxNzBhOTI0MjQ5ZDk0ZWM1ZjhmY2ZmMTY1ZTBmYWUzMjhjODI0MTRjYmM5NDlmZWZhODMzYWFkMjZjZGVmODc1YTU2NWU3YzgzODUzYWUzMGJkYjA2MzcxMTRjMzMxNzFi"
   },
-  "miniapp": {
+  "frame": {
     "version": "1",
     "name": "TX Battle Royale",
     "iconUrl": "https://testtx.netlify.app/og.png",
     "homeUrl": "https://testtx.netlify.app",
-    "description": "Predict Bitcoin block TX count and battle with friends in real time",
     "imageUrl": "https://testtx.netlify.app/og.png",
-    "button": {
-      "title": "Open App",
-      "action": {
-        "type": "launch_frame",
-        "name": "TX Battle Royale",
-        "url": "https://testtx.netlify.app",
-        "splashImageUrl": "https://testtx.netlify.app/og.png",
-        "splashBackgroundColor": "#000000"
-      }
-    }
+    "buttonTitle": "Play Now",
+    "splashImageUrl": "https://testtx.netlify.app/og.png",
+    "splashBackgroundColor": "#1a1a1a",
+    "subtitle": "BTC Block Prediction",
+    "description": "Predict Bitcoin block TX count and battle with friends in real time",
+    "primaryCategory": "social",
+    "tags": ["blockchain", "bitcoin", "prediction", "game", "realtime"],
+    "heroImageUrl": "https://testtx.netlify.app/og.png",
+    "tagline": "Compete and predict BTC blocks!",
+    "ogTitle": "TX Battle Royale",
+    "ogDescription": "Real-time Bitcoin block prediction battle. Guess transactions and climb the leaderboard!",
+    "ogImageUrl": "https://testtx.netlify.app/og.png"
   }
 }

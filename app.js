@@ -123,7 +123,29 @@ function connectSocket() {
   // Real-time leaderboard updates
   socket.on("leaderboard_update", (leaderboard) => {
     renderLeaderboard(leaderboard);
-    console.log("🏆 Leaderboard updated");
+    console.log("🏆 Leaderboard updated with real data");
+  });
+
+  // Handle prediction results
+  socket.on("prediction_result", (data) => {
+    console.log("🎯 Prediction result:", data);
+    
+    // Show result notification if it's for current user
+    if (data.fid === userFid) {
+      const accuracy = data.difference === 0 ? "Perfect!" : `Off by ${data.difference}`;
+      const resultMessage = `🎯 Block ${data.blockHeight}: You predicted ${data.prediction}, actual was ${data.actual}. ${accuracy} (+${data.points} points!)`;
+      
+      addChatMessage("System", resultMessage, new Date(), "prediction");
+      
+      // Visual feedback
+      statusElement.textContent = `Last result: +${data.points} points (${accuracy})`;
+      setTimeout(() => {
+        if (currentBlock) {
+          const blockInfo = `Block ${currentBlock.height}: ${currentBlock.tx_count} TXs | ${new Date(currentBlock.timestamp * 1000).toLocaleTimeString()}`;
+          statusElement.textContent = blockInfo;
+        }
+      }, 5000);
+    }
   });
 }
 
@@ -145,12 +167,40 @@ function renderPlayers(players) {
 
 function renderLeaderboard(leaderboard) {
   leaderboardList.innerHTML = "";
+  
+  if (leaderboard.length === 0) {
+    const li = document.createElement("li");
+    li.textContent = "No players yet. Be the first!";
+    li.style.color = "#ffb84d";
+    li.style.fontStyle = "italic";
+    leaderboardList.appendChild(li);
+    return;
+  }
+  
   leaderboard.forEach((entry, index) => {
     const li = document.createElement("li");
     if (index === 0) li.classList.add("gold");
     else if (index === 1) li.classList.add("silver");
     else if (index === 2) li.classList.add("bronze");
-    li.textContent = `${entry.name} — ${entry.score} pts`;
+    
+    // Enhanced leaderboard display with stats
+    const displayName = entry.display_name || entry.username || `Player ${entry.fid}`;
+    const accuracy = entry.accuracy_percentage || 0;
+    const gamesPlayed = entry.games_played || 0;
+    
+    li.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <strong>${displayName}</strong>
+          ${entry.username ? `<small style="color: #ffb84d;">@${entry.username}</small>` : ''}
+        </div>
+        <div style="text-align: right; font-size: 0.85em;">
+          <div><strong>${entry.total_score} pts</strong></div>
+          <div style="color: #ffb84d;">${gamesPlayed} games • ${accuracy}% accuracy</div>
+        </div>
+      </div>
+    `;
+    
     leaderboardList.appendChild(li);
   });
 }

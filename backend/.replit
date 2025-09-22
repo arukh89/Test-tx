@@ -1,0 +1,4 @@
+run = "node server.js"
+
+[env]
+PORT = "3000"

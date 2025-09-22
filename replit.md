@@ -15,9 +15,9 @@ TX Battle Royale is a real-time Bitcoin transaction prediction game where users 
 - Implemented enhanced wallet connection with user profile retrieval
 - Added realtime player synchronization with improved data flow  
 - Enhanced Socket.IO with reconnection logic and error handling
-- Fixed all hardcoded URLs to use current Replit domain
+- FIXING: Replacing hardcoded URLs with dynamic Replit domain detection
 - Added proper chat timestamps and enhanced UI feedback
-- Configured VM deployment for persistent WebSocket connections
+- SETTING UP: VM deployment for persistent WebSocket connections
 - All static assets (icons, images) properly served
 
 ## File Structure

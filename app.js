@@ -21,6 +21,8 @@ const sendBtn = document.getElementById("sendBtn");
 const chatBox = document.getElementById("chatBox");
 const leaderboardList = document.getElementById("leaderboardList");
 const userStatus = document.getElementById("userStatus");
+const connectWalletBtn = document.getElementById("connectWalletBtn");
+const disconnectWalletBtn = document.getElementById("disconnectWalletBtn");
 
 // -------------------
 // State
@@ -213,7 +215,7 @@ async function connectFarcasterWallet() {
           bio: user.bio || null
         };
         
-        userStatus.textContent = `Connected: ${userProfile.displayName} (@${userProfile.username})`;
+        updateWalletUI(true);
         console.log("✅ Farcaster wallet connected:", userProfile);
         
         return true;
@@ -238,20 +240,64 @@ async function connectFarcasterWallet() {
       bio: "Anonymous player"
     };
     
-    userStatus.textContent = `Anonymous: ${userProfile.displayName}`;
+    updateWalletUI(false);
     return false;
   }
 }
 
 // -------------------
+// Wallet UI Management
+// -------------------
+function updateWalletUI(isConnected) {
+  if (isConnected && userProfile) {
+    userStatus.textContent = `✅ ${userProfile.displayName} (@${userProfile.username})`;
+    connectWalletBtn.classList.add("hidden");
+    disconnectWalletBtn.classList.remove("hidden");
+    connectWalletBtn.textContent = "Connected!";
+  } else {
+    userStatus.textContent = userProfile ? `🔴 ${userProfile.displayName} (Anonymous)` : "Not connected";
+    connectWalletBtn.classList.remove("hidden");
+    disconnectWalletBtn.classList.add("hidden");
+    connectWalletBtn.textContent = "Connect Farcaster Wallet";
+  }
+}
+
+function disconnectWallet() {
+  userFid = null;
+  userProfile = null;
+  updateWalletUI(false);
+  
+  addChatMessage("System", "Disconnected from Farcaster wallet", new Date(), "system");
+  console.log("🔌 Wallet disconnected");
+}
+
+// -------------------
 // UI Events
 // -------------------
+// Wallet Connect Button
+connectWalletBtn.addEventListener("click", async () => {
+  connectWalletBtn.textContent = "Connecting...";
+  connectWalletBtn.disabled = true;
+  
+  const connected = await connectFarcasterWallet();
+  if (connected) {
+    addChatMessage("System", `${userProfile.displayName} connected their Farcaster wallet!`, new Date(), "system");
+  }
+  
+  connectWalletBtn.disabled = false;
+});
+
+// Wallet Disconnect Button
+disconnectWalletBtn.addEventListener("click", () => {
+  disconnectWallet();
+});
+
+// Join Battle Button - simplified since wallet connection is now separate
 joinButton.addEventListener("click", async () => {
   if (!userFid) {
-    const connected = await connectFarcasterWallet();
-    if (connected) {
-      addChatMessage("System", `${userProfile.displayName} connected their Farcaster wallet!`, new Date());
-    }
+    // Prompt user to connect wallet first
+    alert("Please connect your Farcaster wallet first!");
+    return;
   }
   
   if (isConnected && socket) {
@@ -290,7 +336,7 @@ presentBlockButton.addEventListener("click", () => {
 submitPredictionBtn.addEventListener("click", () => {
   if (!predictionInput.value) return;
   if (!userFid) {
-    alert("Please join the battle first!");
+    alert("Please connect your Farcaster wallet first!");
     return;
   }
   
@@ -316,7 +362,7 @@ submitPredictionBtn.addEventListener("click", () => {
 sendBtn.addEventListener("click", () => {
   if (!chatInput.value) return;
   if (!userFid) {
-    alert("Please join the battle first!");
+    alert("Please connect your Farcaster wallet first!");
     return;
   }
   socket.emit("chat_message", { fid: userFid, message: chatInput.value, profile: userProfile });
@@ -342,20 +388,6 @@ predictionInput.addEventListener("keypress", (e) => {
 // -------------------
 document.addEventListener("DOMContentLoaded", () => {
   connectSocket();
-  
-  // Always call ready() to hide splash screen - this is required for Farcaster Mini Apps
-  try {
-    if (typeof window.miniApp !== 'undefined' && window.miniApp.actions) {
-      console.log("🎭 Calling Farcaster SDK ready()");
-      window.miniApp.actions.ready();
-    } else {
-      // Fallback for when SDK is not available
-      console.log("🚫 Farcaster SDK not available, attempting window.parent ready signal");
-      if (window.parent && window.parent !== window) {
-        window.parent.postMessage({ type: 'ready' }, '*');
-      }
-    }
-  } catch (error) {
-    console.error("Error calling ready():", error);
-  }
+  // Initialize wallet UI
+  updateWalletUI(false);
 });

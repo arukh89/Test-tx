@@ -67,38 +67,59 @@
       <!-- Leaderboard -->
       <div class="card leaderboard">
         <h2>Leaderboard</h2>
-        <p class="small" id="userStatus">Signed in as Not signed</p>
+        
+        <!-- Farcaster Wallet Connection -->
+        <div class="wallet-section">
+          <h3>🎭 Farcaster Wallet</h3>
+          <p class="small" id="userStatus">Not connected</p>
+          <button class="cta wallet-btn" id="connectWalletBtn">Connect Farcaster Wallet</button>
+          <button class="cta wallet-btn disconnect hidden" id="disconnectWalletBtn">Disconnect</button>
+        </div>
+        
         <ul id="leaderboardList"></ul>
       </div>
     </div>
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
-  <script src="https://unpkg.com/@farcaster/miniapp-sdk/dist/index.umd.js"></script>
+  <script src="https://unpkg.com/@farcaster/miniapp-sdk/dist/index.umd.js" onload="initializeFarcasterSDK()"></script>
   <script>
-    // Initialize Farcaster SDK and call ready immediately
-    console.log("🎭 Loading Farcaster SDK...");
-    
-    if (typeof MiniAppSDK !== 'undefined') {
-      window.miniApp = MiniAppSDK;
-      console.log("✅ Farcaster SDK loaded successfully");
+    // Initialize Farcaster SDK with proper loading check
+    function initializeFarcasterSDK() {
+      console.log("🎭 Farcaster SDK loaded, initializing...");
       
-      // Call ready immediately to hide splash screen
-      try {
-        if (MiniAppSDK.actions && MiniAppSDK.actions.ready) {
-          console.log("🚀 Calling MiniAppSDK.actions.ready()");
-          MiniAppSDK.actions.ready();
+      if (typeof MiniAppSDK !== 'undefined') {
+        window.miniApp = MiniAppSDK;
+        console.log("✅ Farcaster SDK available");
+        
+        // Call ready immediately to hide splash screen
+        try {
+          if (MiniAppSDK.actions && MiniAppSDK.actions.ready) {
+            console.log("🚀 Calling MiniAppSDK.actions.ready()");
+            MiniAppSDK.actions.ready();
+          } else {
+            console.log("⚠️ MiniAppSDK.actions.ready not available");
+          }
+        } catch (error) {
+          console.error("Error calling MiniAppSDK.actions.ready():", error);
         }
-      } catch (error) {
-        console.error("Error calling MiniAppSDK.actions.ready():", error);
-      }
-    } else {
-      console.log("⚠️ MiniAppSDK not available");
-      // Signal ready via postMessage as fallback
-      if (window.parent && window.parent !== window) {
-        window.parent.postMessage({ type: 'miniapp_ready' }, '*');
+      } else {
+        console.log("⚠️ MiniAppSDK not available after load");
+        // Signal ready via postMessage as fallback
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: 'ready' }, '*');
+        }
       }
     }
+    
+    // Fallback if onload doesn't fire
+    window.addEventListener('load', function() {
+      setTimeout(function() {
+        if (typeof window.miniApp === 'undefined' && typeof MiniAppSDK !== 'undefined') {
+          initializeFarcasterSDK();
+        }
+      }, 100);
+    });
   </script>
   <script src="app.js"></script>
 </body>

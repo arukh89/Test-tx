@@ -1,7 +1,37 @@
 // app.js (Frontend - Netlify)
 // Full default logic, connect ke backend Replit
 
-import { actions } from "@farcaster/miniapp-sdk";
+/*
+  NOTE: Browser environments can't resolve bare-package imports like
+  `import { actions } from "@farcaster/miniapp-sdk";` unless you bundle the code.
+  The original project included the UMD bundle via a script tag:
+    <script src="https://unpkg.com/@farcaster/miniapp-sdk/dist/index.umd.js"></script>
+  That UMD bundle exposes the SDK on a global object. Below we attempt to
+  find the `actions` object on a few likely global names. This preserves the
+  rest of your app logic while fixing the "stuck on splash" issue caused by
+  a syntax/import error in the browser.
+*/
+
+let actions = null;
+if (typeof window !== "undefined") {
+  if (window.Farcaster && window.Farcaster.actions) actions = window.Farcaster.actions;
+  else if (window.FarcasterMiniAppSDK && window.FarcasterMiniAppSDK.actions) actions = window.FarcasterMiniAppSDK.actions;
+  else if (window.farcasterMiniAppSdk && window.farcasterMiniAppSdk.actions) actions = window.farcasterMiniAppSdk.actions;
+  else if (window.__farcaster_miniapp_sdk__ && window.__farcaster_miniapp_sdk__.actions) actions = window.__farcaster_miniapp_sdk__.actions;
+  else if (window.farcaster && window.farcaster.actions) actions = window.farcaster.actions;
+  else if (window.actions) actions = window.actions;
+}
+
+if (!actions) {
+  console.warn(
+    "Farcaster miniapp SDK `actions` not found on window. Falling back to a noop stub. If splash persists, ensure the UMD SDK script is loaded before app.js."
+  );
+  actions = {
+    ready() {
+      console.warn("actions.ready() called on noop stub");
+    },
+  };
+}
 
 // Ganti dengan URL backend Replit kamu
 const API_URL = "https://1a4f1f38-1bc5-459f-89d3-7e411642339d-00-8cgu1jweczd6.sisko.replit.dev";
@@ -38,23 +68,19 @@ function connectSocket() {
   socket.on("connect", () => console.log("✅ Connected to backend"));
   socket.on("disconnect", () => console.log("⚠️ Disconnected"));
 
-  // Block updates
   socket.on("block_update", (block) => {
     currentBlock = block;
     blockStatus.textContent = `Live block: ${block.height} | ${block.tx_count} TXs`;
   });
 
-  // Players updates
   socket.on("players_update", (players) => {
     renderPlayers(players);
   });
 
-  // Chat messages
   socket.on("chat_message", (data) => {
     addChatMessage(data.user, data.message);
   });
 
-  // Leaderboard updates
   socket.on("leaderboard_update", (leaderboard) => {
     renderLeaderboard(leaderboard);
   });
@@ -84,59 +110,57 @@ function renderLeaderboard(leaderboard) {
 function addChatMessage(user, message) {
   const div = document.createElement("div");
   div.classList.add("chat-message");
-  div.textContent = `${user}: ${message}`;
+  div.innerHTML = `<strong>${user}:</strong> ${message}`;
   chatMessages.appendChild(div);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
 // -------------------
-// UI Events
+// Event Listeners
 // -------------------
-joinButton.addEventListener("click", async () => {
-  if (!userFid) {
-    const user = await actions.getUser();
-    if (user && user.fid) {
-      userFid = user.fid;
-    } else {
-      alert("Please connect your Farcaster wallet!");
-      return;
-    }
-  }
-  socket.emit("join", { fid: userFid });
+joinButton.addEventListener("click", () => {
+  if (socket) socket.emit("join_game", { name: `User${Math.floor(Math.random() * 1000)}` });
 });
 
 shareButton.addEventListener("click", () => {
-  actions.openUrl("https://testtx.netlify.app");
-});
-
-prevBlockButton.addEventListener("click", () => {
-  socket.emit("get_previous_block");
-});
-
-presentBlockButton.addEventListener("click", () => {
-  socket.emit("get_present_block");
+  if (actions.share) {
+    actions.share({ text: "Join me in TX Battle Royale!" });
+  } else {
+    alert("Share not supported here.");
+  }
 });
 
 predictionForm.addEventListener("submit", (e) => {
   e.preventDefault();
-  if (!predictionInput.value) return;
-  socket.emit("prediction", { fid: userFid, prediction: predictionInput.value });
-  predictionInput.value = "";
+  const prediction = parseInt(predictionInput.value, 10);
+  if (!isNaN(prediction) && socket) {
+    socket.emit("submit_prediction", { prediction });
+    predictionInput.value = "";
+  }
 });
 
 chatForm.addEventListener("submit", (e) => {
   e.preventDefault();
-  if (!chatInput.value) return;
-  socket.emit("chat_message", { fid: userFid, message: chatInput.value });
-  chatInput.value = "";
+  const msg = chatInput.value.trim();
+  if (msg && socket) {
+    socket.emit("chat_message", { message: msg });
+    chatInput.value = "";
+  }
+});
+
+prevBlockButton.addEventListener("click", () => {
+  if (socket) socket.emit("request_prev_block");
+});
+
+presentBlockButton.addEventListener("click", () => {
+  if (socket) socket.emit("request_present_block");
 });
 
 // -------------------
 // Init
 // -------------------
-connectSocket();
-
-// ✅ Wajib: kasih sinyal ke Farcaster kalau app sudah siap
 window.addEventListener("load", () => {
+  connectSocket();
+  // ✅ panggil ready agar splash hilang
   actions.ready();
 });

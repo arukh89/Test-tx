@@ -9,7 +9,7 @@
     "name": "TX Battle Royale",
     "iconUrl": "https://testtx.netlify.app/og.png",
     "homeUrl": "https://testtx.netlify.app",
-    "description": "Predict Bitcoin block TX count & battle with friends in real time!",
+    "description": "Predict Bitcoin block TX count and battle with friends in real time",
     "imageUrl": "https://testtx.netlify.app/og.png",
     "button": {
       "title": "Open App",

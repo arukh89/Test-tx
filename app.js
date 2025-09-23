@@ -1,491 +1,319 @@
-// app.js (Frontend)
-// Full default logic, connect to backend
+// app.js
+// Frontend (browser) script for TX Battle Royale
+// - Terhubung ke backend via socket.io (real-time, live data).
+// - Tidak menggunakan dummy data — semua state berasal dari socket events.
+// - Memanggil sdk.actions.ready() secara aman bila tersedia (Farcaster miniapp).
+// - Replit URL (production) dimasukkan eksplisit sesuai permintaan.
 
-// Use local backend URL - Replit will proxy appropriately
-const API_URL = window.location.origin;
+//
+// CONFIG
+//
+const REPLIT_URL = 'https://25b09b7b-8fbd-46f6-a599-1a3a8bdad572-00-110pjaimlcgd1.worf.replit.dev'; // <- wajib, bukan dummy
+const SOCKET_PATH = '/socket.io'; // path proxied oleh server.js
+const SOCKET_URL = REPLIT_URL; // pakai URL Replit sebagai origin untuk koneksi socket
 
-// -------------------
-// DOM Elements - Updated to match index.html IDs
-// -------------------
-const statusElement = document.getElementById("status");
-const joinButton = document.getElementById("joinBtn");
-const shareButton = document.getElementById("shareBtn");
-const prevBlockButton = document.getElementById("prevBlockBtn");
-const presentBlockButton = document.getElementById("currBlockBtn");
-const predictionInput = document.getElementById("predictionInput");
-const submitPredictionBtn = document.getElementById("submitPrediction");
-const playerCount = document.getElementById("playerCount");
-const playersList = document.getElementById("playerList");
-const chatInput = document.getElementById("chatInput");
-const sendBtn = document.getElementById("sendBtn");
-const chatBox = document.getElementById("chatBox");
-const leaderboardList = document.getElementById("leaderboardList");
-const userStatus = document.getElementById("userStatus");
-const connectWalletBtn = document.getElementById("connectWalletBtn");
-const disconnectWalletBtn = document.getElementById("disconnectWalletBtn");
+// ---------------------------
+// Utilities
+// ---------------------------
+function $id(id) { return document.getElementById(id); }
 
-// -------------------
-// State
-// -------------------
-let currentBlock = null;
-let userFid = null;
-let userProfile = null;
-let socket;
-let isConnected = false;
-let reconnectAttempts = 0;
-let maxReconnectAttempts = 5;
-
-// -------------------
-// Connect to backend (Socket.io) with enhanced error handling
-// -------------------
-function connectSocket() {
-  socket = io(API_URL + "/socket.io/", {
-    transports: ['websocket', 'polling'],
-    timeout: 20000,
-    reconnection: true,
-    reconnectionDelay: 2000,
-    reconnectionAttempts: maxReconnectAttempts
-  });
-
-  socket.on("connect", () => {
-    console.log("✅ Connected to backend");
-    statusElement.textContent = "Connected - Waiting for Bitcoin data...";
-    isConnected = true;
-    reconnectAttempts = 0;
-    
-    // Re-join game if user was previously connected
-    if (userFid) {
-      socket.emit("join", { fid: userFid, profile: userProfile });
-    }
-  });
-  
-  socket.on("disconnect", () => {
-    console.log("⚠️ Disconnected");
-    statusElement.textContent = "Disconnected - Trying to reconnect...";
-    isConnected = false;
-  });
-  
-  socket.on("connect_error", (error) => {
-    console.error("Connection error:", error);
-    statusElement.textContent = "Connection error - Retrying...";
-    reconnectAttempts++;
-    
-    if (reconnectAttempts >= maxReconnectAttempts) {
-      statusElement.textContent = "Connection failed - Please refresh the page";
-    }
-  });
-
-  socket.on("reconnect", () => {
-    console.log("🔄 Reconnected successfully");
-    statusElement.textContent = "Reconnected!";
-    reconnectAttempts = 0;
-  });
-
-  // Block updates with enhanced display
-  socket.on("block_update", (block) => {
-    currentBlock = block;
-    const blockInfo = block ? 
-      `Block ${block.height}: ${block.tx_count} TXs | ${new Date(block.timestamp * 1000).toLocaleTimeString()}` : 
-      "Waiting for block data...";
-    statusElement.textContent = blockInfo;
-  });
-
-  // Enhanced players updates with real-time sync
-  socket.on("players_update", (players) => {
-    renderPlayers(players);
-    // Add visual feedback for new players joining
-    if (players.length > 0) {
-      const latestPlayer = players[players.length - 1];
-      console.log(`🎮 Player update: ${latestPlayer.name} joined`);
-    }
-  });
-
-  // Initial state with better error handling
-  socket.on("state", (data) => {
-    console.log("📊 Received initial game state:", data);
-    if (data.block) {
-      currentBlock = data.block;
-    }
-    if (data.players) {
-      renderPlayers(data.players);
-    }
-    if (data.leaderboard) {
-      renderLeaderboard(data.leaderboard);
-    }
-  });
-
-  // Enhanced chat messages with timestamps
-  socket.on("chat_message", (data) => {
-    const timestamp = data.timestamp ? new Date(data.timestamp) : new Date();
-    addChatMessage(data.user, data.message, timestamp, data.type, data.username);
-  });
-
-  // Real-time leaderboard updates
-  socket.on("leaderboard_update", (leaderboard) => {
-    renderLeaderboard(leaderboard);
-    console.log("🏆 Leaderboard updated with real data");
-  });
-
-  // Handle prediction results
-  socket.on("prediction_result", (data) => {
-    console.log("🎯 Prediction result:", data);
-    
-    // Show result notification if it's for current user
-    if (data.fid === userFid) {
-      const accuracy = data.difference === 0 ? "Perfect!" : `Off by ${data.difference}`;
-      const resultMessage = `🎯 Block ${data.blockHeight}: You predicted ${data.prediction}, actual was ${data.actual}. ${accuracy} (+${data.points} points!)`;
-      
-      addChatMessage("System", resultMessage, new Date(), "prediction");
-      
-      // Visual feedback
-      statusElement.textContent = `Last result: +${data.points} points (${accuracy})`;
-      setTimeout(() => {
-        if (currentBlock) {
-          const blockInfo = `Block ${currentBlock.height}: ${currentBlock.tx_count} TXs | ${new Date(currentBlock.timestamp * 1000).toLocaleTimeString()}`;
-          statusElement.textContent = blockInfo;
-        }
-      }, 5000);
-    }
-  });
+function escapeHtml(s) {
+  if (s === undefined || s === null) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
-function renderPlayers(players) {
-  playersList.innerHTML = "";
-  playerCount.textContent = players.length;
-  players.forEach((p) => {
-    const li = document.createElement("li");
-    const displayName = p.name || p.fid || "Unknown";
-    const prediction = p.prediction ? `${p.prediction} TXs` : "No prediction";
-    
-    // Show Farcaster username if available
-    const usernameInfo = p.profile?.username ? ` (@${p.profile.username})` : "";
-    
-    li.innerHTML = `<span class="player-name">${displayName}${usernameInfo}</span>: <span class="player-prediction">${prediction}</span>`;
-    playersList.appendChild(li);
-  });
-}
-
-function renderLeaderboard(leaderboard) {
-  leaderboardList.innerHTML = "";
-  
-  if (leaderboard.length === 0) {
-    const li = document.createElement("li");
-    li.textContent = "No players yet. Be the first!";
-    li.style.color = "#ffb84d";
-    li.style.fontStyle = "italic";
-    leaderboardList.appendChild(li);
-    return;
-  }
-  
-  leaderboard.forEach((entry, index) => {
-    const li = document.createElement("li");
-    if (index === 0) li.classList.add("gold");
-    else if (index === 1) li.classList.add("silver");
-    else if (index === 2) li.classList.add("bronze");
-    
-    // Enhanced leaderboard display with stats
-    const displayName = entry.display_name || entry.username || `Player ${entry.fid}`;
-    const accuracy = entry.accuracy_percentage || 0;
-    const gamesPlayed = entry.games_played || 0;
-    
-    li.innerHTML = `
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <div>
-          <strong>${displayName}</strong>
-          ${entry.username ? `<small style="color: #ffb84d;">@${entry.username}</small>` : ''}
-        </div>
-        <div style="text-align: right; font-size: 0.85em;">
-          <div><strong>${entry.total_score} pts</strong></div>
-          <div style="color: #ffb84d;">${gamesPlayed} games • ${accuracy}% accuracy</div>
-        </div>
-      </div>
-    `;
-    
-    leaderboardList.appendChild(li);
-  });
-}
-
-function addChatMessage(user, message, timestamp, type = "normal", username = null) {
-  const div = document.createElement("div");
-  
-  // Apply different styles based on message type
-  switch(type) {
-    case "prediction":
-      div.classList.add("chat-message", "chat-prediction");
-      break;
-    case "system":
-      div.classList.add("chat-message", "chat-system");
-      break;
-    default:
-      div.classList.add("chat-message", "chat-normal");
-  }
-  
-  const timeStr = timestamp ? new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
-  
-  // Format user display with username if available
-  const userDisplay = username ? `${user} (@${username})` : user;
-  
-  // Different formatting based on message type
-  if (type === "system") {
-    div.innerHTML = `<span class="chat-time">[${timeStr}]</span> <span class="chat-system-text">${message}</span>`;
-  } else {
-    div.innerHTML = `<span class="chat-time">[${timeStr}]</span> <span class="chat-user">${userDisplay}:</span> ${message}`;
-  }
-  
-  chatBox.appendChild(div);
-  chatBox.scrollTop = chatBox.scrollHeight;
-  
-  // Add a subtle animation
-  div.style.opacity = '0';
-  setTimeout(() => div.style.opacity = '1', 10);
-}
-
-// -------------------
-// Enhanced Farcaster Wallet Connection
-// -------------------
-async function connectFarcasterWallet() {
-  statusElement.textContent = "Connecting to Farcaster...";
-  
+function formatTime(ts) {
   try {
-    // Check if Farcaster SDK is available
-    if (typeof window.miniApp !== 'undefined' && window.miniApp.actions) {
-      console.log("🎭 Farcaster SDK available, attempting connection...");
-      console.log("Available actions:", Object.keys(window.miniApp.actions));
-      
-      // Try to get user data
-      if (typeof window.miniApp.actions.getUser === 'function') {
-        const user = await window.miniApp.actions.getUser();
-        console.log("👤 Farcaster user data:", user);
-        
-        if (user && (user.fid || user.id)) {
-          const fid = user.fid || user.id;
-          userFid = fid.toString();
-          userProfile = {
-            fid: userFid,
-            username: user.username || user.handle || `fid_${userFid}`,
-            displayName: user.displayName || user.name || user.username || `User ${userFid}`,
-            pfpUrl: user.pfpUrl || user.avatar || user.profileImage || null,
-            bio: user.bio || user.description || null
-          };
-          
-          updateWalletUI(true);
-          console.log("✅ Farcaster wallet connected:", userProfile);
-          
-          return true;
-        }
+    const d = ts ? new Date(ts) : new Date();
+    return d.toLocaleString();
+  } catch (e) {
+    return String(ts);
+  }
+}
+
+function safeEl(el) {
+  return el || { innerHTML: '', innerText: '', value: '', appendChild() {}, scrollTop: 0, scrollHeight: 0 };
+}
+
+// ---------------------------
+// DOM refs (expects these IDs in index.html)
+// ---------------------------
+const statusEl = $id('status');
+const joinBtn = $id('joinBtn');
+const shareBtn = $id('shareBtn');
+const prevBlockBtn = $id('prevBlockBtn');
+const currBlockBtn = $id('currBlockBtn');
+const predictionInput = $id('predictionInput');
+const submitPredictionBtn = $id('submitPredictionBtn');
+const playersContainer = $id('playersContainer');
+const leaderboardContainer = $id('leaderboardContainer');
+const currentBlockContainer = $id('currentBlock');
+const chatForm = $id('chatForm');
+const chatInput = $id('chatInput');
+const messagesList = $id('messagesList');
+
+// ---------------------------
+// App state
+// ---------------------------
+let socket = null;
+let isConnected = false;
+let userFid = localStorage.getItem('tx_battle_fid') || null;
+let userProfile = (() => {
+  try { return JSON.parse(localStorage.getItem('tx_battle_profile') || 'null'); } catch(e){ return null; }
+})();
+let players = [];
+let leaderboard = [];
+let currentBlock = null;
+
+// ---------------------------
+// Rendering functions
+// ---------------------------
+function updateStatus(text, isError = false) {
+  const el = safeEl(statusEl);
+  el.innerText = text;
+  if (el.classList) {
+    if (isError) el.classList.add('error'); else el.classList.remove('error');
+  }
+}
+
+function renderPlayers(list) {
+  players = Array.isArray(list) ? list : players;
+  const container = safeEl(playersContainer);
+  container.innerHTML = '';
+  players.forEach(p => {
+    const div = document.createElement('div');
+    div.className = 'player-row';
+    div.innerHTML = `
+      <div class="player-name">${escapeHtml(p.name || p.fid || 'anon')}</div>
+      <div class="player-meta">Score: ${Number(p.score || 0)} • Prediction: ${escapeHtml(String(p.prediction || '-'))}</div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function renderLeaderboard(list) {
+  leaderboard = Array.isArray(list) ? list : leaderboard;
+  const container = safeEl(leaderboardContainer);
+  container.innerHTML = '';
+  leaderboard.forEach((r, i) => {
+    const div = document.createElement('div');
+    div.className = 'leaderboard-row';
+    div.innerHTML = `<strong>#${i+1}</strong> ${escapeHtml(r.name || r.fid || 'anon')} — ${Number(r.score||0)}`;
+    container.appendChild(div);
+  });
+}
+
+function renderCurrentBlock(block) {
+  if (!block) {
+    currentBlock = currentBlock || null;
+  } else {
+    currentBlock = block;
+  }
+  const c = safeEl(currentBlockContainer);
+  if (!currentBlock) {
+    c.innerText = 'No block yet';
+    return;
+  }
+  c.innerHTML = `
+    <div class="block-number">Block: ${escapeHtml(String(currentBlock.number || currentBlock.height || '—'))}</div>
+    <div class="block-time">Time: ${formatTime(currentBlock.timestamp || currentBlock.time || Date.now())}</div>
+    <div class="block-hash">Hash: ${escapeHtml(String(currentBlock.hash || currentBlock.id || '-'))}</div>
+  `;
+}
+
+function appendChatMessage(msg) {
+  const ul = safeEl(messagesList);
+  const li = document.createElement('li');
+  li.className = 'chat-item';
+  const who = escapeHtml(msg.from || msg.fid || 'anon');
+  const text = escapeHtml(msg.text || msg.message || '');
+  const ts = formatTime(msg.timestamp || Date.now());
+  li.innerHTML = `<small class="meta">${who} • ${ts}</small><div class="msg">${text}</div>`;
+  ul.appendChild(li);
+  ul.scrollTop = ul.scrollHeight;
+}
+
+// ---------------------------
+// Socket (real-time) connection
+// ---------------------------
+function connectSocket() {
+  // Always attempt to connect to the provided Replit URL (real-time endpoint).
+  // The server should proxy /socket.io to the backend (server.js takes care of spawn + proxy).
+  try {
+    // Ensure socket.io client script is loaded in index.html:
+    // <script src="/socket.io/socket.io.js"></script>
+    if (typeof io === 'undefined') {
+      console.error('socket.io client not found. Please include <script src="/socket.io/socket.io.js"></script> in index.html');
+      updateStatus('socket.io client missing', true);
+      return;
+    }
+
+    // Create socket that connects to the Replit URL (secure wss when https)
+    socket = io(SOCKET_URL, {
+      path: SOCKET_PATH,
+      transports: ['websocket', 'polling'],
+      reconnectionAttempts: 10,
+      reconnectionDelayMax: 2000
+    });
+
+    socket.on('connect', () => {
+      isConnected = true;
+      updateStatus('Connected', false);
+      console.log('Socket connected:', socket.id);
+      // If we have a stored user fid, attempt to rejoin
+      if (userFid) {
+        socket.emit('join', { fid: userFid, profile: userProfile });
       }
-      
-      // Try alternative methods if getUser doesn't work
-      if (typeof window.miniApp.actions.getUserProfile === 'function') {
-        const profile = await window.miniApp.actions.getUserProfile();
-        console.log("👤 Farcaster profile data:", profile);
-        
-        if (profile && (profile.fid || profile.id)) {
-          const fid = profile.fid || profile.id;
-          userFid = fid.toString();
-          userProfile = {
-            fid: userFid,
-            username: profile.username || `fid_${userFid}`,
-            displayName: profile.displayName || profile.username || `User ${userFid}`,
-            pfpUrl: profile.pfpUrl || null,
-            bio: profile.bio || null
-          };
-          
-          updateWalletUI(true);
-          console.log("✅ Farcaster profile connected:", userProfile);
-          
-          return true;
-        }
-      }
-      
-      console.log("❌ No valid user data from Farcaster SDK");
-      throw new Error("No valid user data from Farcaster");
+    });
+
+    socket.on('disconnect', (reason) => {
+      isConnected = false;
+      updateStatus('Disconnected', true);
+      console.warn('Socket disconnected:', reason);
+    });
+
+    socket.on('connect_error', (err) => {
+      isConnected = false;
+      updateStatus('Connection error', true);
+      console.error('Socket connect_error:', err);
+    });
+
+    // Application events: these must be emitted by the backend (live data)
+    socket.on('state', (data) => {
+      // expected: { block, players, leaderboard, chat }
+      if (!data) return;
+      if (data.block) renderCurrentBlock(data.block);
+      if (data.players) renderPlayers(data.players);
+      if (data.leaderboard) renderLeaderboard(data.leaderboard);
+      if (Array.isArray(data.chat)) data.chat.forEach(appendChatMessage);
+    });
+
+    socket.on('players_update', (data) => renderPlayers(data || []));
+    socket.on('leaderboard', (data) => renderLeaderboard(data || []));
+    socket.on('block_update', (block) => renderCurrentBlock(block));
+    socket.on('chat_message', (msg) => appendChatMessage(msg || {}));
+
+    // handle custom backend events for real-time blockchain feed if present
+    socket.on('mempool_tx', (tx) => {
+      // backend may emit raw mempool transactions — handle as needed (e.g., show in UI)
+      console.log('mempool_tx', tx);
+      // You can add UI logic here to list recent txs if desired
+    });
+
+  } catch (e) {
+    console.error('connectSocket failed', e);
+    updateStatus('Socket init failed', true);
+  }
+}
+
+// ---------------------------
+// UI actions that emit to server
+// ---------------------------
+function joinGame() {
+  if (!socket || !isConnected) {
+    updateStatus('Not connected to server', true);
+    return;
+  }
+  // create or re-use fid
+  if (!userFid) {
+    userFid = `guest-${Math.floor(Math.random() * 100000)}`;
+    userProfile = { name: `Guest ${userFid.slice(-4)}` };
+    localStorage.setItem('tx_battle_fid', userFid);
+    localStorage.setItem('tx_battle_profile', JSON.stringify(userProfile));
+  }
+  socket.emit('join', { fid: userFid, profile: userProfile });
+  updateStatus(`Joining as ${userProfile?.name || userFid}`);
+}
+
+function submitPrediction() {
+  if (!socket || !isConnected) {
+    updateStatus('Not connected', true);
+    return;
+  }
+  const val = safeEl(predictionInput).value;
+  if (!val) {
+    updateStatus('Enter your prediction', true);
+    return;
+  }
+  const payload = { fid: userFid, prediction: val, timestamp: Date.now() };
+  socket.emit('submit_prediction', payload);
+  updateStatus('Prediction sent');
+  safeEl(predictionInput).value = '';
+}
+
+function sendChat(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  if (!socket || !isConnected) {
+    updateStatus('Not connected', true);
+    return;
+  }
+  const text = safeEl(chatInput).value;
+  if (!text) return;
+  const msg = { fid: userFid, text, timestamp: Date.now() };
+  socket.emit('chat_message', msg);
+  appendChatMessage({ from: userProfile?.name || userFid || 'me', text, timestamp: Date.now() });
+  safeEl(chatInput).value = '';
+}
+
+function shareGame() {
+  try {
+    const url = REPLIT_URL;
+    if (navigator.share) {
+      navigator.share({ title: 'TX Battle Royale', text: 'Join my game', url });
     } else {
-      console.log("🚫 Farcaster SDK not available");
-      throw new Error("Farcaster SDK not available");
+      navigator.clipboard.writeText(url).then(() => updateStatus('Link copied'));
     }
-  } catch (error) {
-    console.log("⚠️ Farcaster connection failed, creating anonymous user:", error.message);
-    
-    // Fallback to anonymous user
-    userFid = "anon_" + Math.random().toString(36).substr(2, 9);
-    userProfile = {
-      fid: userFid,
-      username: userFid,
-      displayName: `Anonymous ${userFid.slice(-4)}`,
-      pfpUrl: null,
-      bio: "Anonymous player"
-    };
-    
-    updateWalletUI(false);
-    return false;
+  } catch (e) {
+    console.warn('Share failed', e);
+    updateStatus('Share failed', true);
   }
 }
 
-// -------------------
-// Wallet UI Management
-// -------------------
-function updateWalletUI(isConnected) {
-  if (isConnected && userProfile) {
-    userStatus.textContent = `✅ ${userProfile.displayName} (@${userProfile.username})`;
-    connectWalletBtn.classList.add("hidden");
-    disconnectWalletBtn.classList.remove("hidden");
-    connectWalletBtn.textContent = "Connected!";
-  } else {
-    userStatus.textContent = userProfile ? `🔴 ${userProfile.displayName} (Anonymous)` : "Not connected";
-    connectWalletBtn.classList.remove("hidden");
-    disconnectWalletBtn.classList.add("hidden");
-    connectWalletBtn.textContent = "Connect Farcaster Wallet";
-  }
+// ---------------------------
+// Wire UI event handlers
+// ---------------------------
+function wireUi() {
+  if (joinBtn) joinBtn.addEventListener('click', joinGame);
+  if (shareBtn) shareBtn.addEventListener('click', shareGame);
+  if (submitPredictionBtn) submitPredictionBtn.addEventListener('click', submitPrediction);
+  if (chatForm) chatForm.addEventListener('submit', sendChat);
+  if (prevBlockBtn) prevBlockBtn.addEventListener('click', () => {
+    if (socket && isConnected) socket.emit('request_prev_block');
+  });
+  if (currBlockBtn) currBlockBtn.addEventListener('click', () => {
+    if (socket && isConnected) socket.emit('request_current_block');
+  });
 }
 
-function disconnectWallet() {
-  userFid = null;
-  userProfile = null;
-  updateWalletUI(false);
-  
-  addChatMessage("System", "Disconnected from Farcaster wallet", new Date(), "system");
-  console.log("🔌 Wallet disconnected");
-}
-
-// -------------------
-// UI Events
-// -------------------
-// Wallet Connect Button
-connectWalletBtn.addEventListener("click", async () => {
-  connectWalletBtn.textContent = "Connecting...";
-  connectWalletBtn.disabled = true;
-  
-  const connected = await connectFarcasterWallet();
-  if (connected) {
-    addChatMessage("System", `${userProfile.displayName} connected their Farcaster wallet!`, new Date(), "system");
-  }
-  
-  connectWalletBtn.disabled = false;
-});
-
-// Wallet Disconnect Button
-disconnectWalletBtn.addEventListener("click", () => {
-  disconnectWallet();
-});
-
-// Join Battle Button - simplified since wallet connection is now separate
-joinButton.addEventListener("click", async () => {
-  if (!userFid) {
-    // Prompt user to connect wallet first
-    alert("Please connect your Farcaster wallet first!");
-    return;
-  }
-  
-  if (isConnected && socket) {
-    socket.emit("join", { fid: userFid, profile: userProfile });
-    joinButton.textContent = "Joined!";
-    joinButton.disabled = true;
-    setTimeout(() => {
-      joinButton.textContent = "Join Battle";
-      joinButton.disabled = false;
-    }, 2000);
-  } else {
-    statusElement.textContent = "Not connected to server. Please wait...";
-  }
-});
-
-shareButton.addEventListener("click", () => {
-  if (typeof window.miniApp !== 'undefined' && window.miniApp.actions) {
-    window.miniApp.actions.openUrl(window.location.href);
-  } else {
-    // Fallback for non-Farcaster environments
-    navigator.share?.({ 
-      title: 'TX Battle Royale', 
-      url: window.location.href 
-    }) || alert('Share: ' + window.location.href);
-  }
-});
-
-prevBlockButton.addEventListener("click", () => {
-  socket.emit("get_previous_block");
-});
-
-presentBlockButton.addEventListener("click", () => {
-  socket.emit("get_present_block");
-});
-
-submitPredictionBtn.addEventListener("click", () => {
-  if (!predictionInput.value) return;
-  if (!userFid) {
-    alert("Please connect your Farcaster wallet first!");
-    return;
-  }
-  
-  const prediction = parseInt(predictionInput.value);
-  socket.emit("prediction", { fid: userFid, prediction: prediction, profile: userProfile });
-  
-  // Auto-post to chat when prediction is submitted
-  const displayName = userProfile?.displayName || userProfile?.username || userFid;
-  const chatMessage = `🎯 ${displayName} predicted ${prediction} transactions for the next block!`;
-  socket.emit("chat_message", { fid: userFid, message: chatMessage, profile: userProfile, type: "prediction" });
-  
-  predictionInput.value = "";
-  
-  // Visual feedback
-  submitPredictionBtn.textContent = "Submitted!";
-  submitPredictionBtn.disabled = true;
-  setTimeout(() => {
-    submitPredictionBtn.textContent = "Submit Prediction";
-    submitPredictionBtn.disabled = false;
-  }, 1500);
-});
-
-sendBtn.addEventListener("click", () => {
-  if (!chatInput.value) return;
-  if (!userFid) {
-    alert("Please connect your Farcaster wallet first!");
-    return;
-  }
-  socket.emit("chat_message", { fid: userFid, message: chatInput.value, profile: userProfile });
-  chatInput.value = "";
-});
-
-// Allow Enter key for chat
-chatInput.addEventListener("keypress", (e) => {
-  if (e.key === "Enter") {
-    sendBtn.click();
-  }
-});
-
-// Allow Enter key for prediction
-predictionInput.addEventListener("keypress", (e) => {
-  if (e.key === "Enter") {
-    submitPredictionBtn.click();
-  }
-});
-
-// -------------------
+// ---------------------------
 // Init
-// -------------------
-document.addEventListener("DOMContentLoaded", () => {
-  console.log("🎮 TX Battle Royale initializing...");
-  
-  // Start socket connection
+// ---------------------------
+document.addEventListener('DOMContentLoaded', () => {
+  wireUi();
+  updateStatus('Connecting...');
   connectSocket();
-  
-  // Initialize wallet UI
-  updateWalletUI(false);
-  
-  // Auto-connect Farcaster if available (for mini app context)
-  setTimeout(async () => {
-    if (typeof window.miniApp !== 'undefined' && window.miniApp.actions) {
-      console.log("🔄 Auto-connecting Farcaster wallet...");
-      const connected = await connectFarcasterWallet();
-      if (connected) {
-        console.log("🎭 Auto-connected to Farcaster successfully");
-        // Auto-join game if connected
-        if (isConnected && socket) {
-          socket.emit("join", { fid: userFid, profile: userProfile });
-        }
-      }
-    }
-  }, 1000);
-  
-  console.log("✅ TX Battle Royale initialization complete");
+
+  // if connection not established quickly, let user know
+  setTimeout(() => {
+    if (!isConnected) updateStatus('Waiting for backend connection...');
+  }, 4000);
 });
+
+// ---------------------------
+// Platform: Farcaster miniapp ready() call (safe wrapper)
+// ---------------------------
+try {
+  if (typeof sdk !== 'undefined' && sdk && sdk.actions && typeof sdk.actions.ready === 'function') {
+    sdk.actions.ready();
+    console.log('sdk.actions.ready() called');
+  } else {
+    console.log('sdk.actions.ready not available (not running inside Farcaster miniapp).');
+  }
+} catch (e) {
+  console.warn('sdk.actions.ready() failed:', e);
+      }

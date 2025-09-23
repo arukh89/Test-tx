@@ -1,45 +1,52 @@
-// app.js — client-side logic for TX Battle Royale
-// Connects to BACKEND_URL (Replit) for real-time events via socket.io
-// Expects global BACKEND_URL constant defined in index.html
-
 (function() {
   const BACKEND = (typeof BACKEND_URL !== 'undefined' && BACKEND_URL) ? BACKEND_URL : window.location.origin;
   const SOCKET_PATH = '/socket.io';
 
-  // DOM refs
-  const statusEl = document.getElementById('status') || (function(){ const el = document.createElement('div'); el.id='status'; el.style.display='none'; document.body.appendChild(el); return el; })();
+  // DOM refs (perbaikan ID sesuai index.html)
+  const statusEl = document.getElementById('status') || (()=> {
+    const el = document.createElement('div');
+    el.id = 'status'; el.style.display = 'none'; document.body.appendChild(el); return el;
+  })();
   const joinBtn = document.getElementById('joinBtn');
   const shareBtn = document.getElementById('shareBtn');
   const prevBlockBtn = document.getElementById('prevBlockBtn');
   const currBlockBtn = document.getElementById('currBlockBtn');
   const predictionInput = document.getElementById('predictionInput');
-  const submitPredictionBtn = document.getElementById('submitPredictionBtn');
-  const playersContainer = document.getElementById('playersContainer');
-  const leaderboardContainer = document.getElementById('leaderboardContainer');
+  const submitPredictionBtn = document.getElementById('submitPrediction');
+  const playersContainer = document.getElementById('playerList');
+  const leaderboardContainer = document.getElementById('leaderboardList');
   const currentBlockContainer = document.getElementById('currentBlock');
-  const chatForm = document.getElementById('chatForm');
+  const messagesList = document.getElementById('chatBox');
   const chatInput = document.getElementById('chatInput');
-  const messagesList = document.getElementById('messagesList');
+  const sendBtn = document.getElementById('sendBtn');
   const playerCount = document.getElementById('playerCount');
 
   let socket = null;
   let isConnected = false;
   let userFid = localStorage.getItem('tx_battle_fid') || null;
-  let userProfile = (function(){ try { return JSON.parse(localStorage.getItem('tx_battle_profile') || 'null'); } catch(e) { return null; } })();
+  let userProfile = (()=> { 
+    try { return JSON.parse(localStorage.getItem('tx_battle_profile') || 'null'); }
+    catch(e) { return null; }
+  })();
 
   function updateStatus(text, isError) {
     if (!statusEl) return;
     statusEl.innerText = text;
-    if (isError) statusEl.style.color = '#ff6b6b'; else statusEl.style.color = '';
+    statusEl.style.color = isError ? '#ff6b6b' : '';
   }
 
   function escapeHtml(s) {
     if (s === null || s === undefined) return '';
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    return String(s).replace(/&/g,'&amp;')
+                    .replace(/</g,'&lt;')
+                    .replace(/>/g,'&gt;')
+                    .replace(/"/g,'&quot;')
+                    .replace(/'/g,'&#39;');
   }
 
   function fmtTime(ts) {
-    try { return new Date(ts).toLocaleString(); } catch (e) { return ts; }
+    try { return new Date(ts).toLocaleString(); }
+    catch (e) { return ts; }
   }
 
   function renderPlayers(list) {
@@ -50,8 +57,7 @@
     list.forEach(p => {
       const li = document.createElement('li');
       li.className = 'player-item';
-      li.innerHTML = `<div style="display:flex;justify-content:space-between"><strong>${escapeHtml(p.profile?.name || p.name || p.fid || 'anon')}</strong><span class="muted">${Number(p.score || 0)}</span></div>
-                      <div class="muted">Prediction: ${escapeHtml(p.prediction || '-')}</div>`;
+      li.innerHTML = `<div style="display:flex;justify-content:space-between"><strong>${escapeHtml(p.profile?.name || p.name || p.fid || 'anon')}</strong><span class="muted">${Number(p.score || 0)}</span></div><div class="muted">Prediction: ${escapeHtml(p.prediction || '-')}</div>`;
       playersContainer.appendChild(li);
     });
   }
@@ -74,9 +80,7 @@
       currentBlockContainer.innerHTML = '<div class="muted">No block loaded</div>';
       return;
     }
-    currentBlockContainer.innerHTML = `<div><strong>Block #${escapeHtml(String(block.number || block.height || '—'))}</strong></div>
-                                      <div class="muted">Time: ${fmtTime(block.timestamp || Date.now())}</div>
-                                      <div class="muted">Hash: ${escapeHtml(block.hash || block.id || '-')}</div>`;
+    currentBlockContainer.innerHTML = `<div><strong>Block #${escapeHtml(String(block.number || block.height || '—'))}</strong></div><div class="muted">Time: ${fmtTime(block.timestamp || Date.now())}</div><div class="muted">Hash: ${escapeHtml(block.hash || block.id || '-')}</div>`;
   }
 
   function appendChatMessage(msg) {
@@ -91,11 +95,11 @@
   function connectSocket() {
     if (typeof io === 'undefined') {
       updateStatus('socket.io client missing', true);
-      console.error('socket.io client not found; ensure script loaded from backend.');
+      console.error('socket.io client not found; ensure script loaded.');
       return;
     }
 
-    socket = io(BACKEND_URL, { path: SOCKET_PATH, transports: ['websocket','polling'] });
+    socket = io(BACKEND, { path: SOCKET_PATH, transports: ['websocket','polling'] });
 
     socket.on('connect', () => {
       isConnected = true;
@@ -104,19 +108,19 @@
       if (userFid) socket.emit('join', { fid: userFid, profile: userProfile });
     });
 
-    socket.on('disconnect', (reason) => {
+    socket.on('disconnect', reason => {
       isConnected = false;
       updateStatus('Disconnected', true);
       console.warn('socket disconnected', reason);
     });
 
-    socket.on('connect_error', (err) => {
+    socket.on('connect_error', err => {
       isConnected = false;
       updateStatus('Connection error', true);
       console.error('connect_error', err);
     });
 
-    socket.on('state', (data) => {
+    socket.on('state', data => {
       if (!data) return;
       if (data.block) renderBlock(data.block);
       if (data.players) renderPlayers(data.players);
@@ -128,13 +132,9 @@
     socket.on('leaderboard', renderLeaderboard);
     socket.on('block_update', renderBlock);
     socket.on('chat_message', appendChatMessage);
-    socket.on('mempool_tx', (tx) => {
-      // optional: handle mempool tx UI updates if desired
-      console.debug('mempool_tx', tx);
-    });
+    socket.on('mempool_tx', tx => { console.debug('mempool_tx', tx); });
   }
 
-  // UI actions
   function joinGame() {
     if (!socket || !isConnected) { updateStatus('Not connected to server', true); return; }
     if (!userFid) {
@@ -167,24 +167,29 @@
     chatInput.value = '';
   }
 
-  // Wire UI
   document.addEventListener('DOMContentLoaded', () => {
     if (joinBtn) joinBtn.addEventListener('click', joinGame);
     if (submitPredictionBtn) submitPredictionBtn.addEventListener('click', submitPrediction);
-    if (chatForm) chatForm.addEventListener('submit', sendChat);
-    if (shareBtn) shareBtn.addEventListener('click', () => { navigator.clipboard?.writeText(window.location.href).then(()=> updateStatus('Link copied')); });
+    if (sendBtn) sendBtn.addEventListener('click', sendChat);
+    if (shareBtn) shareBtn.addEventListener('click', () => {
+      navigator.clipboard?.writeText(window.location.href).then(()=> updateStatus('Link copied'));
+    });
     if (prevBlockBtn) prevBlockBtn.addEventListener('click', () => { socket && socket.emit('request_prev_block'); });
     if (currBlockBtn) currBlockBtn.addEventListener('click', () => { socket && socket.emit('request_current_block'); });
     updateStatus('Connecting...');
     connectSocket();
   });
 
-  // safe Farcaster SDK ready call
+  // Panggil ready() untuk Farcaster Mini App (jika ada)
   try {
-    if (typeof sdk !== 'undefined' && sdk && sdk.actions && typeof sdk.actions.ready === 'function') {
+    if (window.miniApp && window.miniApp.actions && typeof window.miniApp.actions.ready === 'function') {
+      window.miniApp.actions.ready();
+      console.log('window.miniApp.actions.ready() called');
+    } else if (typeof sdk !== 'undefined' && sdk.actions && typeof sdk.actions.ready === 'function') {
       sdk.actions.ready();
       console.log('sdk.actions.ready() called');
     }
-  } catch (e) { /* ignore */ }
-
+  } catch (e) {
+    console.warn('Error calling ready():', e);
+  }
 })();

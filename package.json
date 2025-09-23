@@ -1,17 +1,21 @@
 {
   "name": "tx-battle-frontend",
   "version": "1.0.0",
-  "description": "TX Battle Royale Frontend",
+  "description": "TX Battle Royale frontend (Netlify ready) + optional Replit server proxy",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "nodemon server.js"
   },
   "dependencies": {
-    "@neondatabase/serverless": "^0.10.4",
-    "drizzle-orm": "^0.44.5",
     "express": "^4.18.2",
-    "http-proxy-middleware": "^2.0.6",
-    "pg": "^8.16.3"
-  }
+    "http-proxy-middleware": "^2.0.6"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
 }

@@ -1,31 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>TX Battle Royale</title>
+
+  <!-- Stylesheet -->
   <link rel="stylesheet" href="style.css">
   <link rel="icon" type="image/png" href="/icons/icon-192.png">
+
+  <!-- Open Graph / Social preview (FRONTEND - Netlify) -->
   <meta property="og:title" content="TX Battle Royale">
   <meta property="og:description" content="Real-time Bitcoin transaction prediction game - Compete with players worldwide!">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="TX Battle Royale">
-  <meta property="og:image" content="https://25b09b7b-8fbd-46f6-a599-1a3a8bdad572-00-110pjaimlcgd1.worf.replit.dev/og.png">
-  <meta property="og:url" content="https://25b09b7b-8fbd-46f6-a599-1a3a8bdad572-00-110pjaimlcgd1.worf.replit.dev">
+  <meta property="og:image" content="https://testtx.netlify.app/og.png">
+  <meta property="og:url" content="https://testtx.netlify.app/">
 
-  <!-- Farcaster Mini App Production Configuration -->
+  <!-- Farcaster Mini App Production Configuration (FRONTEND - Netlify) -->
   <meta name="fc:miniapp" content='{
     "version": "1",
     "name": "TX Battle Royale",
     "description": "Real-time Bitcoin transaction prediction game",
-    "imageUrl": "https://25b09b7b-8fbd-46f6-a599-1a3a8bdad572-00-110pjaimlcgd1.worf.replit.dev/og.png",
+    "imageUrl": "https://testtx.netlify.app/og.png",
     "button": {
       "title": "Play TX Battle Royale",
       "action": {
         "type": "launch_frame",
         "name": "TX Battle Royale",
-        "url": "https://25b09b7b-8fbd-46f6-a599-1a3a8bdad572-00-110pjaimlcgd1.worf.replit.dev",
-        "splashImageUrl": "https://25b09b7b-8fbd-46f6-a599-1a3a8bdad572-00-110pjaimlcgd1.worf.replit.dev/og.png",
+        "url": "https://testtx.netlify.app/",
+        "splashImageUrl": "https://testtx.netlify.app/og.png",
         "splashBackgroundColor": "#1a1a1a",
         "aspectRatio": "portrait"
       }
@@ -36,133 +40,162 @@
     "category": "game",
     "production": true
   }'>
-  
+
   <!-- Production App Signals -->
   <meta name="app-type" content="production">
   <meta name="environment" content="production">
   <meta name="app-version" content="1.0.0">
+
+  <!-- Inline fallback styles (style.css should contain full styles for production) -->
+  <style>
+    :root{--bg1:#041827;--bg2:#071b2a;--card:rgba(255,255,255,0.03);--accent:#08bdb7;--muted:#9fb0bd;--text:#e7f6f6}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;color:var(--text);background:linear-gradient(180deg,var(--bg1) 0%,var(--bg2) 100%);-webkit-font-smoothing:antialiased}
+    .wrap{max-width:1180px;margin:28px auto;padding:20px;display:grid;grid-template-columns:1fr 320px;gap:20px}
+    header{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+    h1{margin:0;font-size:20px}
+    .subtitle{color:var(--muted);font-size:13px}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border-radius:12px;padding:12px;box-shadow:0 8px 30px rgba(2,6,23,0.6)}
+    .controls{display:flex;gap:8px;align-items:center}
+    button.btn{background:var(--accent);color:#031417;border:none;padding:10px 12px;border-radius:10px;font-weight:700;cursor:pointer}
+    input[type="text"],input[type="number"],textarea{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:10px;border-radius:8px;width:100%;color:var(--text)}
+    .players-list,.leaderboard-list,.chat-list{list-style:none;padding:0;margin:0;max-height:360px;overflow:auto}
+    .player-item,.leader-item,.chat-item{padding:10px;border-bottom:1px solid rgba(255,255,255,0.02)}
+    .muted{color:var(--muted)}
+    .wallet-btn{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px;border-radius:8px;color:var(--text);cursor:pointer}
+    footer{grid-column:1/-1;text-align:center;color:var(--muted);font-size:13px;margin-top:12px}
+    @media (max-width:1000px){.wrap{grid-template-columns:1fr}}
+  </style>
 </head>
 <body>
-  <div class="container">
+  <div class="wrap">
     <header>
-      <h1>TX Battle Royale</h1>
-      <p class="subtitle">BTC Block Prediction</p>
+      <div>
+        <h1>TX Battle Royale</h1>
+        <div class="subtitle">Real-time Bitcoin transaction prediction game</div>
+      </div>
+      <div class="muted">Live • Real-time</div>
     </header>
 
-    <p class="status" id="status">Connecting...</p>
-
-    <div class="grid">
-      <!-- Battle Arena -->
-      <div class="card">
-        <h2>Battle Arena</h2>
-        <div class="row">
-          <button class="cta" id="joinBtn">Join Battle</button>
-          <button class="cta" id="shareBtn">Share</button>
-          <button class="cta" id="prevBlockBtn">Previous Block</button>
-          <button class="cta" id="currBlockBtn">Present Block</button>
+    <!-- LEFT: main -->
+    <main class="card" style="min-height:420px">
+      <section>
+        <h2>Current Block</h2>
+        <div id="currentBlock" class="card" style="margin:10px 0; padding:12px;">
+          <!-- Rendered by app.js -->
         </div>
+      </section>
 
-        <p class="small muted">Your TX guess</p>
-        <div class="row">
-          <input type="number" id="predictionInput" placeholder="e.g. 2500">
-          <button class="cta" id="submitPrediction">Submit Prediction</button>
+      <section style="margin-top:14px;">
+        <h3>Controls</h3>
+        <div class="controls" style="margin-top:8px;">
+          <button class="btn" id="joinBtn">Join Game</button>
+          <button class="btn" id="shareBtn">Share</button>
+          <button class="btn" id="prevBlockBtn">Prev Block</button>
+          <button class="btn" id="currBlockBtn">Current Block</button>
         </div>
+      </section>
 
-        <p class="small">Players (<span id="playerCount">0</span>)</p>
-        <ul id="playerList"></ul>
+      <section style="margin-top:14px;">
+        <h3>Prediction</h3>
+        <div style="display:flex;gap:10px;margin-top:8px;">
+          <input id="predictionInput" type="number" placeholder="e.g. 2500" />
+          <button class="btn" id="submitPredictionBtn">Submit</button>
+        </div>
+      </section>
 
+      <section style="margin-top:14px;">
+        <h3>Players <span id="playerCount" class="muted" style="font-weight:600;margin-left:8px;">(0)</span></h3>
+        <ul id="playersContainer" class="players-list"></ul>
+      </section>
+
+      <section style="margin-top:14px;">
         <h3>Chat</h3>
-        <div class="chatBox" id="chatBox"></div>
-        <div class="row">
-          <input type="text" id="chatInput" placeholder="Say something...">
-          <button class="cta" id="sendBtn">Send</button>
-        </div>
-      </div>
+        <div id="messagesList" class="chat-list card" style="min-height:120px;max-height:320px;overflow:auto;padding:8px;"></div>
+        <form id="chatForm" style="display:flex;gap:8px;margin-top:8px;">
+          <input id="chatInput" type="text" placeholder="Say something..." />
+          <button class="btn" type="submit">Send</button>
+        </form>
+      </section>
+    </main>
 
-      <!-- Leaderboard -->
-      <div class="card leaderboard">
-        <h2>Leaderboard</h2>
-        
-        <!-- Farcaster Wallet Connection -->
-        <div class="wallet-section">
-          <h3>🎭 Farcaster Wallet</h3>
-          <p class="small" id="userStatus">Not connected</p>
-          <button class="cta wallet-btn" id="connectWalletBtn">Connect Farcaster Wallet</button>
-          <button class="cta wallet-btn disconnect hidden" id="disconnectWalletBtn">Disconnect</button>
-        </div>
-        
-        <ul id="leaderboardList"></ul>
-      </div>
-    </div>
+    <!-- RIGHT: sidebar -->
+    <aside class="card">
+      <section>
+        <h3>Leaderboard</h3>
+        <ul id="leaderboardContainer" class="leaderboard-list" style="margin-top:8px;"></ul>
+      </section>
+
+      <section style="margin-top:12px;">
+        <h3>Farcaster</h3>
+        <p class="muted">Miniapp integration</p>
+        <button class="wallet-btn" id="connectWalletBtn">Connect Wallet</button>
+      </section>
+    </aside>
+
+    <footer>
+      Frontend: <a href="https://testtx.netlify.app/" target="_blank" style="color:inherit;text-decoration:underline">testtx.netlify.app</a>
+      &nbsp;•&nbsp;
+      Backend: <a href="https://25b09b7b-8fbd-46f6-a599-1a3a8bdad572-00-110pjaimlcgd1.worf.replit.dev" target="_blank" style="color:inherit;text-decoration:underline">Replit</a>
+    </footer>
   </div>
 
-  <script src="/socket.io/socket.io.js"></script>
+  <!-- Global constants: FRONTEND (Netlify) & BACKEND (Replit) -->
   <script>
-    // Enhanced Farcaster SDK initialization with immediate ready signal
+    const FRONTEND_URL = "https://testtx.netlify.app";
+    const BACKEND_URL = "https://25b09b7b-8fbd-46f6-a599-1a3a8bdad572-00-110pjaimlcgd1.worf.replit.dev";
+  </script>
+
+  <!-- Load socket.io client from BACKEND (Replit) so version matches backend -->
+  <script src="https://25b09b7b-8fbd-46f6-a599-1a3a8bdad572-00-110pjaimlcgd1.worf.replit.dev/socket.io/socket.io.js"></script>
+
+  <!-- Farcaster Miniapp SDK (UMD) and initializer (alias to sdk) -->
+  <script>
     function initializeFarcasterSDK() {
-      console.log("🎭 Initializing Farcaster Mini App SDK...");
-      
       try {
         if (typeof MiniAppSDK !== 'undefined') {
           window.miniApp = MiniAppSDK;
-          console.log("✅ Farcaster SDK loaded successfully");
-          
-          // Immediately signal app is ready
+          window.sdk = MiniAppSDK;
           if (MiniAppSDK.actions && typeof MiniAppSDK.actions.ready === 'function') {
-            console.log("🚀 Calling ready() immediately...");
-            MiniAppSDK.actions.ready();
-            console.log("✅ Ready signal sent to Farcaster");
-          } else {
-            console.log("⚠️ MiniAppSDK.actions.ready not available");
+            try { MiniAppSDK.actions.ready(); } catch(e){ console.warn('MiniAppSDK ready failed', e); }
           }
-          
-          // Test SDK availability
-          console.log("📋 Available SDK actions:", Object.keys(MiniAppSDK.actions || {}));
-          
-          return true;
-        } else {
-          console.log("⚠️ MiniAppSDK not available, signaling ready via postMessage");
-          // Fallback ready signal via postMessage
-          if (window.parent && window.parent !== window) {
-            window.parent.postMessage({ type: 'ready' }, '*');
-            console.log("📤 Sent ready signal via postMessage");
-          }
-          return false;
+          return;
         }
-      } catch (error) {
-        console.error("❌ Error initializing Farcaster SDK:", error);
-        // Send ready signal anyway as fallback
+        if (window.miniApp) {
+          window.sdk = window.miniApp;
+          return;
+        }
+        // As fallback send postMessage ready to parent frames
         if (window.parent && window.parent !== window) {
-          window.parent.postMessage({ type: 'ready' }, '*');
+          try { window.parent.postMessage({ type: 'ready' }, '*'); } catch(e) {}
         }
-        return false;
+      } catch (err) {
+        console.warn('Farcaster SDK init error', err);
       }
     }
-    
-    // Immediate ready signal as soon as possible
+
+    // Try to send a postMessage ready early
     if (window.parent && window.parent !== window) {
-      window.parent.postMessage({ type: 'ready' }, '*');
+      try { window.parent.postMessage({ type: 'ready' }, '*'); } catch(e) {}
     }
   </script>
+
   <script src="https://unpkg.com/@farcaster/miniapp-sdk@latest/dist/index.umd.js" onload="initializeFarcasterSDK()" onerror="initializeFarcasterSDK()"></script>
+
   <script>
-    // Backup initialization attempts
+    // Ensure SDK initialized if async load missed
     document.addEventListener('DOMContentLoaded', function() {
       setTimeout(function() {
-        if (typeof window.miniApp === 'undefined') {
-          initializeFarcasterSDK();
-        }
-      }, 100);
+        if (typeof window.sdk === 'undefined') initializeFarcasterSDK();
+      }, 120);
     });
-    
     window.addEventListener('load', function() {
       setTimeout(function() {
-        if (typeof window.miniApp === 'undefined') {
-          initializeFarcasterSDK();
-        }
+        if (typeof window.sdk === 'undefined') initializeFarcasterSDK();
       }, 200);
     });
   </script>
-  <script src="app.js"></script>
+
+  <!-- App logic -->
+  <script src="/app.js"></script>
 </body>
 </html>

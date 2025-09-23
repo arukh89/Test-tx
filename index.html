@@ -82,9 +82,8 @@
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
-  <script src="https://unpkg.com/@farcaster/miniapp-sdk@latest/dist/index.umd.js"></script>
   <script>
-    // Enhanced Farcaster SDK initialization
+    // Enhanced Farcaster SDK initialization with immediate ready signal
     function initializeFarcasterSDK() {
       console.log("🎭 Initializing Farcaster Mini App SDK...");
       
@@ -93,10 +92,13 @@
           window.miniApp = MiniAppSDK;
           console.log("✅ Farcaster SDK loaded successfully");
           
-          // Signal app is ready
+          // Immediately signal app is ready
           if (MiniAppSDK.actions && typeof MiniAppSDK.actions.ready === 'function') {
-            console.log("🚀 Signaling ready to Farcaster...");
+            console.log("🚀 Calling ready() immediately...");
             MiniAppSDK.actions.ready();
+            console.log("✅ Ready signal sent to Farcaster");
+          } else {
+            console.log("⚠️ MiniAppSDK.actions.ready not available");
           }
           
           // Test SDK availability
@@ -104,29 +106,46 @@
           
           return true;
         } else {
-          console.log("⚠️ MiniAppSDK not available, running in standalone mode");
+          console.log("⚠️ MiniAppSDK not available, signaling ready via postMessage");
+          // Fallback ready signal via postMessage
+          if (window.parent && window.parent !== window) {
+            window.parent.postMessage({ type: 'ready' }, '*');
+            console.log("📤 Sent ready signal via postMessage");
+          }
           return false;
         }
       } catch (error) {
         console.error("❌ Error initializing Farcaster SDK:", error);
+        // Send ready signal anyway as fallback
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: 'ready' }, '*');
+        }
         return false;
       }
     }
     
-    // Initialize when DOM loads or SDK loads
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', function() {
-        setTimeout(initializeFarcasterSDK, 100);
-      });
-    } else {
-      setTimeout(initializeFarcasterSDK, 100);
+    // Immediate ready signal as soon as possible
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: 'ready' }, '*');
     }
+  </script>
+  <script src="https://unpkg.com/@farcaster/miniapp-sdk@latest/dist/index.umd.js" onload="initializeFarcasterSDK()" onerror="initializeFarcasterSDK()"></script>
+  <script>
+    // Backup initialization attempts
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(function() {
+        if (typeof window.miniApp === 'undefined') {
+          initializeFarcasterSDK();
+        }
+      }, 100);
+    });
     
-    // Also try when the script loads
     window.addEventListener('load', function() {
-      if (typeof window.miniApp === 'undefined') {
-        setTimeout(initializeFarcasterSDK, 200);
-      }
+      setTimeout(function() {
+        if (typeof window.miniApp === 'undefined') {
+          initializeFarcasterSDK();
+        }
+      }, 200);
     });
   </script>
   <script src="app.js"></script>

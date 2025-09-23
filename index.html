@@ -1,52 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="utf-8" />
   <title>TX Battle Royale</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
 
-  <!-- Stylesheet -->
-  <link rel="stylesheet" href="style.css">
-  <link rel="icon" type="image/png" href="/icons/icon-192.png">
+  <!-- FRONTEND (Netlify) — used for public preview, OG, Farcaster miniapp -->
+  <meta property="og:title" content="TX Battle Royale" />
+  <meta property="og:description" content="Real-time Bitcoin transaction prediction game — join live & predict mempool action." />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="TX Battle Royale" />
+  <meta property="og:url" content="https://testtx.netlify.app/" />
+  <meta property="og:image" content="https://testtx.netlify.app/og.png" />
 
-  <!-- Open Graph / Social preview (FRONTEND - Netlify) -->
-  <meta property="og:title" content="TX Battle Royale">
-  <meta property="og:description" content="Real-time Bitcoin transaction prediction game - Compete with players worldwide!">
-  <meta property="og:type" content="website">
-  <meta property="og:site_name" content="TX Battle Royale">
-  <meta property="og:image" content="https://testtx.netlify.app/og.png">
-  <meta property="og:url" content="https://testtx.netlify.app/">
-
-  <!-- Farcaster Mini App Production Configuration (FRONTEND - Netlify) -->
+  <!-- Farcaster Mini App meta (point to FRONTEND) -->
   <meta name="fc:miniapp" content='{
-    "version": "1",
-    "name": "TX Battle Royale",
-    "description": "Real-time Bitcoin transaction prediction game",
-    "imageUrl": "https://testtx.netlify.app/og.png",
+    "version":"1",
+    "name":"TX Battle Royale",
+    "description":"Real-time Bitcoin transaction prediction game",
+    "imageUrl":"https://testtx.netlify.app/og.png",
     "button": {
-      "title": "Play TX Battle Royale",
+      "title":"Play TX Battle Royale",
       "action": {
-        "type": "launch_frame",
-        "name": "TX Battle Royale",
-        "url": "https://testtx.netlify.app/",
-        "splashImageUrl": "https://testtx.netlify.app/og.png",
-        "splashBackgroundColor": "#1a1a1a",
-        "aspectRatio": "portrait"
+        "type":"launch_frame",
+        "name":"TX Battle Royale",
+        "url":"https://testtx.netlify.app/",
+        "splashImageUrl":"https://testtx.netlify.app/og.png",
+        "splashBackgroundColor":"#0b1220",
+        "aspectRatio":"portrait"
       }
     },
-    "author": {
-      "name": "TX Battle Royale"
-    },
+    "author": { "name": "TX Battle Royale" },
     "category": "game",
     "production": true
   }'>
 
-  <!-- Production App Signals -->
-  <meta name="app-type" content="production">
-  <meta name="environment" content="production">
-  <meta name="app-version" content="1.0.0">
+  <link rel="icon" href="/icons/icon-192.png" type="image/png" />
+  <link rel="stylesheet" href="/style.css" />
 
-  <!-- Inline fallback styles (style.css should contain full styles for production) -->
+  <!-- Inline fallback styles (style.css should contain full production styles) -->
   <style>
     :root{--bg1:#041827;--bg2:#071b2a;--card:rgba(255,255,255,0.03);--accent:#08bdb7;--muted:#9fb0bd;--text:#e7f6f6}
     html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;color:var(--text);background:linear-gradient(180deg,var(--bg1) 0%,var(--bg2) 100%);-webkit-font-smoothing:antialiased}
@@ -73,7 +65,7 @@
         <h1>TX Battle Royale</h1>
         <div class="subtitle">Real-time Bitcoin transaction prediction game</div>
       </div>
-      <div class="muted">Live • Real-time</div>
+      <div class="muted">Live • Realtime</div>
     </header>
 
     <!-- LEFT: main -->
@@ -139,16 +131,16 @@
     </footer>
   </div>
 
-  <!-- Global constants: FRONTEND (Netlify) & BACKEND (Replit) -->
+  <!-- Global constants: FRONTEND & BACKEND -->
   <script>
     const FRONTEND_URL = "https://testtx.netlify.app";
     const BACKEND_URL = "https://25b09b7b-8fbd-46f6-a599-1a3a8bdad572-00-110pjaimlcgd1.worf.replit.dev";
   </script>
 
-  <!-- Load socket.io client from BACKEND (Replit) so version matches backend -->
+  <!-- Load socket.io client from BACKEND (ensures version match) -->
   <script src="https://25b09b7b-8fbd-46f6-a599-1a3a8bdad572-00-110pjaimlcgd1.worf.replit.dev/socket.io/socket.io.js"></script>
 
-  <!-- Farcaster Miniapp SDK (UMD) and initializer (alias to sdk) -->
+  <!-- Farcaster Miniapp SDK (UMD), alias to `sdk` when available -->
   <script>
     function initializeFarcasterSDK() {
       try {
@@ -160,42 +152,23 @@
           }
           return;
         }
-        if (window.miniApp) {
-          window.sdk = window.miniApp;
-          return;
-        }
-        // As fallback send postMessage ready to parent frames
+        if (window.miniApp) { window.sdk = window.miniApp; return; }
         if (window.parent && window.parent !== window) {
           try { window.parent.postMessage({ type: 'ready' }, '*'); } catch(e) {}
         }
-      } catch (err) {
-        console.warn('Farcaster SDK init error', err);
-      }
+      } catch(err) { console.warn('Farcaster SDK init error', err); }
     }
-
-    // Try to send a postMessage ready early
     if (window.parent && window.parent !== window) {
       try { window.parent.postMessage({ type: 'ready' }, '*'); } catch(e) {}
     }
   </script>
-
   <script src="https://unpkg.com/@farcaster/miniapp-sdk@latest/dist/index.umd.js" onload="initializeFarcasterSDK()" onerror="initializeFarcasterSDK()"></script>
-
   <script>
-    // Ensure SDK initialized if async load missed
-    document.addEventListener('DOMContentLoaded', function() {
-      setTimeout(function() {
-        if (typeof window.sdk === 'undefined') initializeFarcasterSDK();
-      }, 120);
-    });
-    window.addEventListener('load', function() {
-      setTimeout(function() {
-        if (typeof window.sdk === 'undefined') initializeFarcasterSDK();
-      }, 200);
-    });
+    document.addEventListener('DOMContentLoaded', function(){ setTimeout(()=>{ if(typeof window.sdk==='undefined') initializeFarcasterSDK(); }, 120); });
+    window.addEventListener('load', function(){ setTimeout(()=>{ if(typeof window.sdk==='undefined') initializeFarcasterSDK(); }, 200); });
   </script>
 
-  <!-- App logic -->
+  <!-- App logic (client) -->
   <script src="/app.js"></script>
 </body>
 </html>

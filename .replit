@@ -1,35 +1,22 @@
-modules = ["web", "nix", "nodejs-18"]
-[agent]
-expertMode = true
-integrations = ["javascript_database:1.0.0"]
+# .replit - TX Battle Royale (Hybrid config)
+# Tujuan: Jalankan backend (backend/server.js) di Replit dengan port mapping jelas.
+# Frontend tetap di Netlify: https://testtx.netlify.app
 
-[nix]
-channel = "stable-25_05"
+# Perintah default ketika tombol ▶️ Run ditekan:
+# 1. Jika backend/node_modules belum ada → install dependency sekali.
+# 2. Masuk ke folder backend, lalu jalankan server.js.
+run = "bash -lc 'if [ ! -d backend/node_modules ]; then echo \"Installing backend dependencies...\"; cd backend && npm install; fi; cd backend && node server.js'"
 
-[workflows]
-runButton = "Project"
+# Bahasa/lingkungan
+language = "nodejs"
 
-[[workflows.workflow]]
-name = "Project"
-mode = "parallel"
-author = "agent"
+# Gunakan Node versi modern
+[env]
+NODE_VERSION = "18"
 
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "TX Battle Royale"
-
-[[workflows.workflow]]
-name = "TX Battle Royale"
-author = "agent"
-
-[workflows.workflow.metadata]
-outputType = "webview"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "node server.js"
-waitForPort = 5000
-
+# Mapping port:
+# - Backend: localPort 3001 → externalPort 3001 (untuk Socket.IO / API)
+# - Opsional: frontend proxy di root (server.js) akan listen di 5000, dipetakan ke 80 (HTTP default).
 [[ports]]
 localPort = 3001
 externalPort = 3001
@@ -38,6 +25,8 @@ externalPort = 3001
 localPort = 5000
 externalPort = 80
 
-[deployment]
-deploymentTarget = "vm"
-run = ["node", "server.js"]
+# Catatan:
+# - Jangan ketik `run = "..."` di shell. Baris di atas hanya untuk file ini.
+# - Kalau nanti kamu ingin jalankan frontend+backend bareng di Replit,
+#   ubah run jadi: run = "bash -lc 'if [ ! -d node_modules ]; then npm install; fi; npm start'"
+#   (asumsinya root package.json punya script "start": "node server.js").

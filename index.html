@@ -5,18 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TX Battle Royale</title>
 
-    <!-- Farcaster Mini App meta tag -->
+    <!-- ✅ Farcaster Mini App embed (fixed schema) -->
     <meta
       name="fc:miniapp"
       content='{
         "version":"1",
-        "name":"TX Battle Royale",
-        "iconUrl":"https://testtx.netlify.app/icons/icon-192.png",
-        "homeUrl":"https://testtx.netlify.app/",
         "imageUrl":"https://testtx.netlify.app/og.png",
-        "buttonTitle":"🎮 Play Now",
-        "splashImageUrl":"https://testtx.netlify.app/icons/splash.png",
-        "splashBackgroundColor":"#1a1a1a"
+        "button":{
+          "title":"🎮 Play Now",
+          "action":{
+            "type":"launch_frame",
+            "name":"TX Battle Royale",
+            "url":"https://testtx.netlify.app/",
+            "splashImageUrl":"https://testtx.netlify.app/icons/splash.png",
+            "splashBackgroundColor":"#1a1a1a"
+          }
+        }
       }'
     />
 

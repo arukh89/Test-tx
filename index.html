@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TX Battle Royale</title>
 
-    <!-- ✅ Farcaster Mini App embed (Netlify domain only) -->
+    <!-- ✅ Farcaster Mini App embed -->
     <meta
       name="fc:miniapp"
       content='{
@@ -18,7 +18,7 @@
             "name":"TX Battle Royale",
             "url":"https://testtx.netlify.app/",
             "splashImageUrl":"https://testtx.netlify.app/icons/splash.png",
-            "splashBackgroundColor":"#1a1a1a"
+            "splashBackgroundColor":"#041827"
           }
         }
       }'
@@ -101,28 +101,26 @@
       <footer class="app-footer">
         <p>
           Frontend:
-          <a href="https://testtx.netlify.app/" target="_blank"
-            >https://testtx.netlify.app/</a
-          >
+          <a href="https://testtx.netlify.app/" target="_blank">
+            https://testtx.netlify.app/
+          </a>
         </p>
         <p>
           Backend:
           <a
             href="https://3ffe2d34-7fa9-4492-bdc8-68e9a2b9f021-00-3hy09jgnwmhu3.sisko.replit.dev/"
             target="_blank"
-            >Backend API</a
           >
+            Backend API
+          </a>
         </p>
       </footer>
     </div>
 
     <!-- CONFIG + SCRIPTS -->
     <script src="config.js"></script>
-    <!-- ✅ Socket.io langsung dari backend Replit -->
-    <script src="https://3ffe2d34-7fa9-4492-bdc8-68e9a2b9f021-00-3hy09jgnwmhu3.sisko.replit.dev/socket.io/socket.io.js"></script>
-    <!-- ✅ Farcaster SDK (UMD global build) -->
-    <script src="https://unpkg.com/@farcaster/miniapp-sdk/dist/index.umd.js"></script>
-    <!-- ✅ App logic -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@farcaster/miniapp-sdk/dist/index.umd.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

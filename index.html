@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TX Battle Royale</title>
 
-    <!-- ✅ Farcaster Mini App embed (fixed schema) -->
+    <!-- ✅ Farcaster Mini App embed -->
     <meta
       name="fc:miniapp"
       content='{
@@ -119,7 +119,8 @@
     <!-- CONFIG + SCRIPTS -->
     <script src="config.js"></script>
     <script src="/socket.io/socket.io.js"></script>
-    <script type="module" src="https://esm.run/@farcaster/miniapp-sdk"></script>
+    <!-- ✅ Pakai UMD build, bukan module -->
+    <script src="https://unpkg.com/@farcaster/miniapp-sdk/dist/index.umd.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

@@ -1,22 +1,17 @@
 {
   "accountAssociation": {
-    "header": "eyJmaWQiOjI1MDcwNCwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweDE1MzY1... (TRUNC)",
+    "header": "eyJmaWQiOjI1MDcwNCwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweDE1MzY1NzE0NWVBMmQ1Nzk2OTFhMTQ2YzdFYTRDRkFFMzdEMjdGYWUifQ",
     "payload": "eyJkb21haW4iOiJ0ZXN0dHgubmV0bGlmeS5hcHAifQ",
-    "signature": "MHgzYTQyYTU4YjcwY2U0ZmI3NWRjNTJi... (TRUNC)"
+    "signature": "MHgzYTQyYTU4YjcwY2U0ZmI3NWRjNTJiNzUzNGM3YWZmNjkxNzBhOTI0MjQ5ZDk0ZWM1ZjhmY2ZmMTY1ZTBmYWUzMjhjODI0MTRjYmM5NDlmZWZhODMzYWFkMjZjZGVmODc1YTU2NWU3YzgzODUzYWUzMGJkYjA2MzcxMTRjMzMxNzFi"
   },
-  "version": "1",
-  "id": "tx-battle-app",
-  "name": "TX Battle Royale",
-  "description": "Predict Bitcoin block TX count and battle with friends in real time.",
-  "iconUrl": "https://testtx.netlify.app/icons/icon-192.png",
-  "imageUrl": "https://testtx.netlify.app/og.png",
-  "homeUrl": "https://testtx.netlify.app/",
-  "webhookUrl": "https://3ffe2d34-7fa9-4492-bdc8-68e9a2b9f021-00-3hy09jgnwmhu3.sisko.replit.dev/webhook",
-  "button": {
-    "title": "🎮 Play Now",
-    "action": {
-      "type": "launch",
-      "url": "https://testtx.netlify.app/"
-    }
+  "frame": {
+    "version": "1",
+    "name": "TX Battle Royale",
+    "iconUrl": "https://testtx.netlify.app/icons/icon-192.png",
+    "homeUrl": "https://testtx.netlify.app/",
+    "imageUrl": "https://testtx.netlify.app/og.png",
+    "buttonTitle": "🎮 Play Now",
+    "splashImageUrl": "https://testtx.netlify.app/icons/splash.png",
+    "splashBackgroundColor": "#1a1a1a"
   }
 }

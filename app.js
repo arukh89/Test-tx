@@ -16,18 +16,15 @@ async function initializeFarcasterSDK() {
   try {
     if (window.farcasterSdk) {
       sdkInstance = window.farcasterSdk;
-      console.log("✅ Using window.farcasterSdk");
     } else if (window.FarcasterMiniapp) {
       sdkInstance = window.FarcasterMiniapp;
-      console.log("✅ Using window.FarcasterMiniapp");
     } else if (window.miniapp) {
       sdkInstance = window.miniapp;
-      console.log("✅ Using window.miniapp");
     } else {
-      console.warn("⚠️ No Farcaster SDK found in window");
+      console.warn("No Farcaster SDK found in window");
     }
   } catch (e) {
-    console.error("❌ SDK init error", e);
+    console.error("SDK init error", e);
   }
   return sdkInstance;
 }
@@ -37,15 +34,15 @@ async function callSDKReady() {
     const sdk = await initializeFarcasterSDK();
     if (sdk && sdk.actions && sdk.actions.ready) {
       await sdk.actions.ready();
-      console.log("✅ Farcaster SDK ready() called");
+      console.log("✅ Farcaster SDK ready called");
     } else if (sdk && sdk.ready) {
       await sdk.ready();
-      console.log("✅ Farcaster legacy ready() called");
+      console.log("✅ Farcaster legacy ready called");
     } else {
-      console.warn("⚠️ No ready() function found in SDK");
+      console.warn("⚠️ No ready() found in SDK");
     }
   } catch (err) {
-    console.error("❌ SDK ready error", err);
+    console.error("SDK ready error", err);
   }
 }
 
@@ -55,9 +52,8 @@ async function hideSplashAndShowGame() {
     document.getElementById("gameScreen").style.display = "block";
     await callSDKReady();
     isAppReady = true;
-    console.log("✅ Game screen displayed, splash hidden");
   } catch (e) {
-    console.error("❌ Error showing game screen", e);
+    console.error("Error showing game screen", e);
   }
 }
 
@@ -82,16 +78,18 @@ function addChatMessage(author, message) {
 // Socket Events
 // =====================
 function setupSocket() {
-  socket = io();
+  socket = io("https://3ffe2d34-7fa9-4492-bdc8-68e9a2b9f021-00-3hy09jgnwmhu3.sisko.replit.dev", {
+    transports: ["websocket"]
+  });
 
   socket.on("connect", () => {
-    console.log("🔌 Socket connected");
+    console.log("Socket connected");
     updateStatus("Connected to server ✅");
     hideSplashAndShowGame();
   });
 
   socket.on("disconnect", () => {
-    console.log("🔌 Socket disconnected");
+    console.log("Socket disconnected");
     updateStatus("Disconnected ❌");
   });
 
@@ -171,7 +169,7 @@ function setupEventListeners() {
           alert("Wallet connect not available");
         }
       } catch (e) {
-        console.error("❌ Wallet connect error", e);
+        console.error("Wallet connect error", e);
         updateStatus("Wallet connection failed ❌");
       }
     });
@@ -182,14 +180,14 @@ function setupEventListeners() {
 // Init
 // =====================
 document.addEventListener("DOMContentLoaded", async () => {
-  console.log("🚀 DOM loaded, initializing app...");
   updateStatus("Initializing...");
 
-  // ✅ panggil SDK ready lebih awal supaya splash screen di Farcaster hilang
+  // ✅ panggil SDK ready & tampilkan UI lebih awal
   try {
     await callSDKReady();
+    hideSplashAndShowGame();
   } catch (e) {
-    console.warn("⚠️ early ready() failed", e);
+    console.warn("early ready() failed", e);
   }
 
   setupSocket();

@@ -21,7 +21,7 @@ async function initializeFarcasterSDK() {
     } else if (window.miniapp) {
       sdkInstance = window.miniapp;
     } else {
-      console.warn("No Farcaster SDK found in window");
+      console.warn("⚠️ No Farcaster SDK found in window");
     }
   } catch (e) {
     console.error("SDK init error", e);
@@ -78,18 +78,16 @@ function addChatMessage(author, message) {
 // Socket Events
 // =====================
 function setupSocket() {
-  socket = io("https://3ffe2d34-7fa9-4492-bdc8-68e9a2b9f021-00-3hy09jgnwmhu3.sisko.replit.dev", {
-    transports: ["websocket"]
-  });
+  socket = io();
 
   socket.on("connect", () => {
-    console.log("Socket connected");
+    console.log("🔌 Socket connected");
     updateStatus("Connected to server ✅");
-    hideSplashAndShowGame();
+    hideSplashAndShowGame(); // ⬅️ Splash hilang hanya setelah socket connect
   });
 
   socket.on("disconnect", () => {
-    console.log("Socket disconnected");
+    console.log("🔌 Socket disconnected");
     updateStatus("Disconnected ❌");
   });
 
@@ -182,21 +180,20 @@ function setupEventListeners() {
 document.addEventListener("DOMContentLoaded", async () => {
   updateStatus("Initializing...");
 
-  // ✅ panggil SDK ready & tampilkan UI lebih awal
+  // ✅ Panggil SDK ready lebih awal supaya Farcaster tidak stuck splash
   try {
     await callSDKReady();
-    hideSplashAndShowGame();
   } catch (e) {
-    console.warn("early ready() failed", e);
+    console.warn("⚠️ early ready() failed", e);
   }
 
   setupSocket();
   setupEventListeners();
 
-  // fallback jaga-jaga
+  // Fallback jaga-jaga kalau backend lambat
   setTimeout(async () => {
     if (!isAppReady) {
-      updateStatus("Forcing UI ready...");
+      console.warn("⚠️ Forcing UI ready after timeout...");
       await hideSplashAndShowGame();
     }
   }, 5000);

@@ -36,6 +36,37 @@ app.get("/health", (req, res) => {
   res.json({ status: "ok", players: players.length });
 });
 
+// 🔥 NEW: FARCASTER WEBHOOK ENDPOINT
+app.post("/webhook", express.json(), async (req, res) => {
+  try {
+    console.log("📩 Incoming Farcaster Webhook:", req.body);
+
+    if (req.body && req.body.fid) {
+      const fid = req.body.fid;
+
+      // ambil data user dari Neynar
+      const resp = await fetch(
+        `https://api.neynar.com/v2/farcaster/user/bulk?fids=${fid}`,
+        { headers: { api_key: NEYNAR_API_KEY } }
+      );
+
+      const data = await resp.json();
+      console.log("👤 Neynar user data:", data);
+
+      return res.json({
+        ok: true,
+        received: req.body,
+        neynarUser: data
+      });
+    }
+
+    res.json({ ok: true, received: req.body });
+  } catch (err) {
+    console.error("❌ Error in /webhook:", err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
 // -------------------------
 // SOCKET.IO HANDLERS
 // -------------------------

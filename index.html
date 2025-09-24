@@ -1,113 +1,121 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <title>TX Battle Royale</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  
-  <!-- Farcaster Mini App meta tags -->
-  <meta name="fc:miniapp" content="{&quot;name&quot;:&quot;TX Battle Royale&quot;,&quot;iconUrl&quot;:&quot;https://tx-battle-frontend.replit.app/icons/icon-192.png&quot;,&quot;homeUrl&quot;:&quot;https://tx-battle-frontend.replit.app/&quot;,&quot;imageUrl&quot;:&quot;https://tx-battle-frontend.replit.app/og.png&quot;,&quot;buttonTitle&quot;:&quot;🎮 Play Now&quot;,&quot;splashImageUrl&quot;:&quot;https://tx-battle-frontend.replit.app/icons/splash.png&quot;,&quot;splashBackgroundColor&quot;:&quot;#1a1a1a&quot;}" />
-  <meta name="fc:frame" content="{&quot;name&quot;:&quot;TX Battle Royale&quot;,&quot;iconUrl&quot;:&quot;https://tx-battle-frontend.replit.app/icons/icon-192.png&quot;,&quot;homeUrl&quot;:&quot;https://tx-battle-frontend.replit.app/&quot;,&quot;imageUrl&quot;:&quot;https://tx-battle-frontend.replit.app/og.png&quot;,&quot;buttonTitle&quot;:&quot;🎮 Play Now&quot;,&quot;splashImageUrl&quot;:&quot;https://tx-battle-frontend.replit.app/icons/splash.png&quot;,&quot;splashBackgroundColor&quot;:&quot;#1a1a1a&quot;}" />
-  
-  <!-- Open Graph meta tags -->
-  <meta property="og:title" content="TX Battle Royale" />
-  <meta property="og:description" content="Real-time Bitcoin block prediction battle. Guess transactions and climb the leaderboard!" />
-  <meta property="og:image" content="https://tx-battle-frontend.replit.app/og.png" />
-  <meta property="og:type" content="website" />
-  
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-  <!-- Splash screen -->
-  <div id="splashScreen" class="screen active">
-    <h1>Loading...</h1>
-  </div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TX Battle Royale</title>
 
-  <!-- Game screen -->
-  <div id="gameScreen" class="wrap hidden">
-    <header>
-      <div>
-        <h1>TX Battle Royale</h1>
-        <div class="subtitle">Real-time Bitcoin transaction prediction game</div>
-        <!-- status indicator -->
-        <p id="status" class="muted" style="margin:4px 0 0 0;"></p>
-      </div>
-      <div class="muted">Live • Realtime</div>
-    </header>
+    <!-- Farcaster Mini App meta tag -->
+    <meta
+      name="fc:miniapp"
+      content='{
+        "version":"1",
+        "name":"TX Battle Royale",
+        "iconUrl":"https://testtx.netlify.app/icons/icon-192.png",
+        "homeUrl":"https://testtx.netlify.app/",
+        "imageUrl":"https://testtx.netlify.app/og.png",
+        "buttonTitle":"🎮 Play Now",
+        "splashImageUrl":"https://testtx.netlify.app/icons/splash.png",
+        "splashBackgroundColor":"#1a1a1a"
+      }'
+    />
 
-    <!-- LEFT -->
-    <main class="card" style="min-height:420px">
-      <section>
-        <h2>Current Block</h2>
-        <div id="currentBlock" class="card" style="margin:10px 0; padding:12px;"></div>
-      </section>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- SPLASH SCREEN -->
+    <div id="splashScreen" class="splash-screen">
+      <img src="icons/splash.png" alt="Splash Logo" class="splash-logo" />
+      <h1 class="splash-title">TX Battle Royale</h1>
+    </div>
 
-      <section style="margin-top:14px;">
-        <h3>Controls</h3>
-        <div class="controls" style="margin-top:8px;">
-          <button class="btn" id="joinBtn">Join Game</button>
-          <button class="btn" id="shareBtn">Share</button>
-          <button class="btn" id="prevBlockBtn">Prev Block</button>
-          <button class="btn" id="currBlockBtn">Current Block</button>
-        </div>
-      </section>
+    <!-- MAIN GAME UI -->
+    <div id="gameScreen" class="game-screen" style="display: none">
+      <header class="app-header">
+        <img src="icons/icon-192.png" alt="App Icon" class="app-icon" />
+        <h1 class="app-title">TX Battle Royale</h1>
+      </header>
 
-      <section style="margin-top:14px;">
-        <h3>Prediction</h3>
-        <div style="display:flex;gap:10px;margin-top:8px;">
-          <input id="predictionInput" type="number" placeholder="e.g. 2500" />
-          <button class="btn" id="submitPredictionBtn">Submit</button>
-        </div>
-      </section>
+      <main class="app-main">
+        <!-- Status Bar -->
+        <section class="status-section">
+          <p id="statusMessage">Waiting for players...</p>
+        </section>
 
-      <section style="margin-top:14px;">
-        <h3>Players <span id="playerCount" class="muted">(0)</span></h3>
-        <ul id="playersContainer" class="players-list"></ul>
-      </section>
+        <!-- Current Block -->
+        <section class="block-section">
+          <h2>Current Block</h2>
+          <p id="currentBlock">Loading...</p>
+        </section>
 
-      <section style="margin-top:14px;">
-        <h3>Chat</h3>
-        <div id="messagesList" class="chat-list card" style="min-height:120px;max-height:320px;overflow:auto;padding:8px;"></div>
-        <form id="chatForm" style="display:flex;gap:8px;margin-top:8px;">
-          <input id="chatInput" type="text" placeholder="Say something..." />
-          <button class="btn" type="submit">Send</button>
-        </form>
-      </section>
-    </main>
+        <!-- Controls -->
+        <section class="controls-section">
+          <button id="joinBtn">Join Game</button>
+          <button id="shareBtn">Share</button>
+          <button id="prevBlockBtn">Prev Block</button>
+          <button id="currBlockBtn">Current Block</button>
+        </section>
 
-    <!-- RIGHT -->
-    <aside class="card">
-      <section>
-        <h3>Leaderboard</h3>
-        <ul id="leaderboardContainer" class="leaderboard-list"></ul>
-      </section>
+        <!-- Prediction -->
+        <section class="prediction-section">
+          <h2>Make Your Prediction</h2>
+          <input
+            type="number"
+            id="predictionInput"
+            placeholder="Enter transaction count"
+          />
+          <button id="submitPredictionBtn">Submit</button>
+        </section>
 
-      <section style="margin-top:12px;">
-        <h3>Farcaster</h3>
-        <p class="muted">Miniapp integration</p>
-        <button class="btn" id="connectWalletBtn">Connect Farcaster Wallet</button>
-      </section>
-    </aside>
+        <!-- Players -->
+        <section class="players-section">
+          <h2>Players</h2>
+          <p id="playerCount">0 players joined</p>
+          <div id="playersContainer" class="players-container"></div>
+        </section>
 
-    <footer>
-      Frontend: <a href="https://testtx.netlify.app/" target="_blank">testtx.netlify.app</a> •
-      Backend: <a href="https://3ffe2d34-7fa9-4492-bdc8-68e9a2b9f021-00-3hy09jgnwmhu3.sisko.replit.dev/" target="_blank">Backend</a>
-    </footer>
-  </div>
+        <!-- Chat -->
+        <section class="chat-section">
+          <h2>Chat</h2>
+          <div id="chatMessages" class="chat-messages"></div>
+          <input type="text" id="chatInput" placeholder="Type a message..." />
+          <button id="chatSendBtn">Send</button>
+        </section>
 
-  <!-- Config -->
-  <script src="config.js"></script>
+        <!-- Leaderboard -->
+        <section class="leaderboard-section">
+          <h2>Leaderboard</h2>
+          <ul id="leaderboardList"></ul>
+        </section>
 
-  <!-- Socket.io -->
-  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+        <!-- Wallet -->
+        <section class="wallet-section">
+          <button id="connectWalletBtn">Connect Wallet</button>
+        </section>
+      </main>
 
-  <!-- Farcaster Miniapp SDK -->
-  <script type="module">
-    import { sdk } from 'https://unpkg.com/@farcaster/miniapp-sdk@latest/dist/index.js';
-    window.farcasterSdk = sdk;
-  </script>
+      <footer class="app-footer">
+        <p>
+          Frontend:
+          <a href="https://testtx.netlify.app/" target="_blank"
+            >https://testtx.netlify.app/</a
+          >
+        </p>
+        <p>
+          Backend:
+          <a
+            href="https://3ffe2d34-7fa9-4492-bdc8-68e9a2b9f021-00-3hy09jgnwmhu3.sisko.replit.dev/"
+            target="_blank"
+            >Backend API</a
+          >
+        </p>
+      </footer>
+    </div>
 
-  <!-- App logic -->
-  <script src="app.js"></script>
-</body>
+    <!-- CONFIG + SCRIPTS -->
+    <script src="config.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script type="module" src="https://esm.run/@farcaster/miniapp-sdk"></script>
+    <script src="app.js"></script>
+  </body>
 </html>

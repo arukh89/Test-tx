@@ -127,20 +127,28 @@ let farcasterSdk = null;
 // Initialize Farcaster SDK when page loads
 async function initializeFarcasterSDK() {
   try {
-    // Check if we're in a Farcaster context
-    if (typeof window.FarcasterMiniapp !== 'undefined') {
-      farcasterSdk = window.FarcasterMiniapp;
-      
-      // Call ready to signal the app is loaded
-      if (farcasterSdk.ready) {
-        await farcasterSdk.ready();
-      }
-      
+    // Check if we're in a Farcaster context and SDK is available
+    if (window.farcasterSdk) {
+      farcasterSdk = window.farcasterSdk;
       console.log("✅ Farcaster SDK initialized");
       return true;
     }
   } catch (err) {
     console.warn("Farcaster SDK not available:", err);
+  }
+  return false;
+}
+
+// Call ready() to hide splash screen - this is critical!
+async function callSDKReady() {
+  try {
+    if (farcasterSdk && farcasterSdk.actions && farcasterSdk.actions.ready) {
+      await farcasterSdk.actions.ready();
+      console.log("✅ Called sdk.actions.ready() - splash should be hidden");
+      return true;
+    }
+  } catch (err) {
+    console.warn("Failed to call sdk.actions.ready():", err);
   }
   return false;
 }
@@ -151,12 +159,13 @@ async function connectFarcaster() {
       await initializeFarcasterSDK();
     }
     
-    if (!farcasterSdk) {
+    if (!farcasterSdk || !farcasterSdk.actions) {
       alert("❌ Farcaster SDK not available. This app works best in Farcaster client.");
       return;
     }
     
-    const res = await farcasterSdk.connect();
+    // Use the new SDK actions pattern
+    const res = await farcasterSdk.actions.connect();
     const { fid, username, custodyAddress } = res.user;
 
     alert(`✅ Connected as @${username}\nFID: ${fid}\nWallet: ${custodyAddress}`);
@@ -164,9 +173,9 @@ async function connectFarcaster() {
     // Auto-join game with Farcaster FID
     socket.emit("join", { fid });
 
-    // Sign welcome message
+    // Sign welcome message using new SDK pattern
     const message = `Welcome to ${window.APP_NAME}!\nTime: ${new Date().toISOString()}`;
-    const signed = await farcasterSdk.signMessage(message);
+    const signed = await farcasterSdk.actions.signMessage(message);
 
     alert(`✅ Signed!\nMessage: ${message}\n\nSignature: ${signed}`);
   } catch (err) {
@@ -178,7 +187,7 @@ async function connectFarcaster() {
 connectWalletBtn.addEventListener("click", connectFarcaster);
 
 // -------------------------
-// SPLASH CONTROL
+// SPLASH CONTROL & SDK READY
 // -------------------------
 let isAppReady = false;
 
@@ -186,40 +195,51 @@ async function hideSplashAndShowGame() {
   if (isAppReady) return;
   
   isAppReady = true;
+  
+  // Initialize Farcaster SDK first
+  await initializeFarcasterSDK();
+  
+  // Hide the splash screen in the DOM
   document.getElementById("splashScreen").style.display = "none";
   document.getElementById("gameScreen").style.display = "block";
   
-  // Initialize Farcaster SDK after app is shown
-  await initializeFarcasterSDK();
+  // CRITICAL: Call sdk.actions.ready() to hide Farcaster splash screen
+  const readySuccess = await callSDKReady();
+  if (readySuccess) {
+    updateStatus("Farcaster SDK Ready ✅");
+  } else {
+    updateStatus("App Ready ✅");
+  }
+  
+  console.log("✅ App fully loaded and ready");
 }
 
 socket.on("connect", async () => {
-  updateStatus("Connected ✅");
+  updateStatus("Socket Connected");
   await hideSplashAndShowGame();
 });
 
 socket.on("disconnect", () => {
-  updateStatus("Disconnected ❌");
+  updateStatus("Socket Disconnected ❌");
 });
-
-// fallback timeout - but shorter since we have dynamic backend detection
-setTimeout(async () => {
-  const splash = document.getElementById("splashScreen");
-  if (splash && splash.style.display !== "none") {
-    updateStatus("Loaded (fallback)");
-    await hideSplashAndShowGame();
-  }
-}, window.SPLASH_TIMEOUT || 3000);
 
 // Initialize app when DOM is ready
 document.addEventListener('DOMContentLoaded', async () => {
   updateStatus("Initializing...");
   
-  // If socket connects quickly, great. Otherwise fallback will handle it.
+  // Try to connect socket, but don't wait too long
   setTimeout(async () => {
     if (!isAppReady) {
-      updateStatus("Ready");
+      updateStatus("Loading complete");
       await hideSplashAndShowGame();
     }
-  }, 1000);
+  }, 2000); // Reduced timeout for faster loading
 });
+
+// Fallback timeout for safety
+setTimeout(async () => {
+  if (!isAppReady) {
+    updateStatus("Loaded (fallback)");
+    await hideSplashAndShowGame();
+  }
+}, 5000);

@@ -102,7 +102,10 @@
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 
   <!-- Farcaster Miniapp SDK -->
-  <script src="https://unpkg.com/@farcaster/miniapp-sdk@latest/dist/index.umd.js"></script>
+  <script type="module">
+    import { sdk } from 'https://unpkg.com/@farcaster/miniapp-sdk@latest/dist/index.js';
+    window.farcasterSdk = sdk;
+  </script>
 
   <!-- App logic -->
   <script src="app.js"></script>

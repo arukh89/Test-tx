@@ -4,7 +4,17 @@
   <meta charset="utf-8" />
   <title>TX Battle Royale</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <!-- FIX: gunakan path relatif -->
+  
+  <!-- Farcaster Mini App meta tags -->
+  <meta name="fc:miniapp" content="{&quot;name&quot;:&quot;TX Battle Royale&quot;,&quot;iconUrl&quot;:&quot;https://tx-battle-frontend.replit.app/icons/icon-192.png&quot;,&quot;homeUrl&quot;:&quot;https://tx-battle-frontend.replit.app/&quot;,&quot;imageUrl&quot;:&quot;https://tx-battle-frontend.replit.app/og.png&quot;,&quot;buttonTitle&quot;:&quot;🎮 Play Now&quot;,&quot;splashImageUrl&quot;:&quot;https://tx-battle-frontend.replit.app/icons/splash.png&quot;,&quot;splashBackgroundColor&quot;:&quot;#1a1a1a&quot;}" />
+  <meta name="fc:frame" content="{&quot;name&quot;:&quot;TX Battle Royale&quot;,&quot;iconUrl&quot;:&quot;https://tx-battle-frontend.replit.app/icons/icon-192.png&quot;,&quot;homeUrl&quot;:&quot;https://tx-battle-frontend.replit.app/&quot;,&quot;imageUrl&quot;:&quot;https://tx-battle-frontend.replit.app/og.png&quot;,&quot;buttonTitle&quot;:&quot;🎮 Play Now&quot;,&quot;splashImageUrl&quot;:&quot;https://tx-battle-frontend.replit.app/icons/splash.png&quot;,&quot;splashBackgroundColor&quot;:&quot;#1a1a1a&quot;}" />
+  
+  <!-- Open Graph meta tags -->
+  <meta property="og:title" content="TX Battle Royale" />
+  <meta property="og:description" content="Real-time Bitcoin block prediction battle. Guess transactions and climb the leaderboard!" />
+  <meta property="og:image" content="https://tx-battle-frontend.replit.app/og.png" />
+  <meta property="og:type" content="website" />
+  
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -13,17 +23,19 @@
     <h1>Loading...</h1>
   </div>
 
-  <!-- Game screen (UI asli kamu) -->
+  <!-- Game screen -->
   <div id="gameScreen" class="wrap hidden">
     <header>
       <div>
         <h1>TX Battle Royale</h1>
         <div class="subtitle">Real-time Bitcoin transaction prediction game</div>
+        <!-- status indicator -->
+        <p id="status" class="muted" style="margin:4px 0 0 0;"></p>
       </div>
       <div class="muted">Live • Realtime</div>
     </header>
 
-    <!-- LEFT: main -->
+    <!-- LEFT -->
     <main class="card" style="min-height:420px">
       <section>
         <h2>Current Block</h2>
@@ -63,7 +75,7 @@
       </section>
     </main>
 
-    <!-- RIGHT: sidebar -->
+    <!-- RIGHT -->
     <aside class="card">
       <section>
         <h3>Leaderboard</h3>
@@ -73,15 +85,13 @@
       <section style="margin-top:12px;">
         <h3>Farcaster</h3>
         <p class="muted">Miniapp integration</p>
-        <!-- Tombol wallet -->
-        <button class="btn" id="connectWalletBtn">Connect Wallet</button>
-        <button class="btn" id="signMessageBtn">Sign Message</button>
+        <button class="btn" id="connectWalletBtn">Connect Farcaster Wallet</button>
       </section>
     </aside>
 
     <footer>
       Frontend: <a href="https://testtx.netlify.app/" target="_blank">testtx.netlify.app</a> •
-      Backend: <a href="https://your-backend-url" target="_blank">Backend</a>
+      Backend: <a href="https://3ffe2d34-7fa9-4492-bdc8-68e9a2b9f021-00-3hy09jgnwmhu3.sisko.replit.dev/" target="_blank">Backend</a>
     </footer>
   </div>
 
@@ -89,7 +99,7 @@
   <script src="config.js"></script>
 
   <!-- Socket.io -->
-  <script src="https://your-backend-url/socket.io/socket.io.js"></script>
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 
   <!-- Farcaster Miniapp SDK -->
   <script src="https://unpkg.com/@farcaster/miniapp-sdk@latest/dist/index.umd.js"></script>

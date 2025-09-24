@@ -1,256 +1,225 @@
-// -------------------- Globals --------------------
-let socket;
-let isConnected = false;
-let userFid = null;
-let userProfile = null;
+// ================================
+// FRONTEND LOGIC: TX Battle Royale
+// ================================
 
-// -------------------- DOM Elements --------------------
-const splashScreen = document.getElementById("splashScreen");
-const gameScreen = document.getElementById("gameScreen");
+// -------------------------
+// SOCKET CONNECTION
+// -------------------------
+const socket = io(window.BACKEND_URL);
 
+// -------------------------
+// UI ELEMENTS
+// -------------------------
 const joinBtn = document.getElementById("joinBtn");
-const submitPredictionBtn = document.getElementById("submitPredictionBtn");
-const predictionInput = document.getElementById("predictionInput");
-const chatForm = document.getElementById("chatForm");
-const chatInput = document.getElementById("chatInput");
 const shareBtn = document.getElementById("shareBtn");
 const prevBlockBtn = document.getElementById("prevBlockBtn");
 const currBlockBtn = document.getElementById("currBlockBtn");
+const predictionInput = document.getElementById("predictionInput");
+const submitPredictionBtn = document.getElementById("submitPredictionBtn");
+
+const playersDiv = document.getElementById("playersContainer");
+const playerCount = document.getElementById("playerCount");
+
+const chatBox = document.getElementById("messagesList");
+const chatInput = document.getElementById("chatInput");
+const chatForm = document.getElementById("chatForm");
+
+const leaderboardDiv = document.getElementById("leaderboardContainer");
 const connectWalletBtn = document.getElementById("connectWalletBtn");
-const signMessageBtn = document.getElementById("signMessageBtn");
 
-// containers
-const playersContainer = document.getElementById("playersContainer");
-const leaderboardContainer = document.getElementById("leaderboardContainer");
-const messagesList = document.getElementById("messagesList");
-const playerCountEl = document.getElementById("playerCount");
-const currentBlockEl = document.getElementById("currentBlock");
 const statusEl = document.getElementById("status");
+function updateStatus(msg) {
+  if (statusEl) statusEl.textContent = msg;
+}
 
-// -------------------- UI Helpers --------------------
-function showScreen(screen) {
-  if (screen === "splash") {
-    splashScreen.classList.add("active");
-    gameScreen.classList.add("hidden");
-  } else if (screen === "game") {
-    splashScreen.classList.remove("active");
-    gameScreen.classList.remove("hidden");
+// -------------------------
+// JOIN GAME
+// -------------------------
+joinBtn.addEventListener("click", () => {
+  const fid = prompt("Masukkan FID Farcaster kamu:");
+  if (fid) {
+    socket.emit("join", { fid });
   }
-}
-
-function updateStatus(msg, isError = false) {
-  if (!statusEl) return;
-  statusEl.textContent = msg;
-  statusEl.style.color = isError ? "tomato" : "var(--muted)";
-}
-
-function renderPlayers(players) {
-  playersContainer.innerHTML = "";
-  if (!players || players.length === 0) {
-    playersContainer.innerHTML = `<li class="muted">No players yet</li>`;
-  } else {
-    players.forEach(p => {
-      const li = document.createElement("li");
-      li.className = "player-item";
-      li.textContent = `${p.name || p.fid}: ${p.prediction}`;
-      playersContainer.appendChild(li);
-    });
-  }
-  playerCountEl.textContent = `(${players?.length || 0})`;
-}
-
-function renderLeaderboard(entries) {
-  leaderboardContainer.innerHTML = "";
-  if (!entries || entries.length === 0) {
-    leaderboardContainer.innerHTML = `<li class="muted">No data</li>`;
-  } else {
-    entries.forEach(e => {
-      const li = document.createElement("li");
-      li.className = "leader-item";
-      li.textContent = `${e.name || e.fid}: ${e.score}`;
-      leaderboardContainer.appendChild(li);
-    });
-  }
-}
-
-function renderBlock(block) {
-  currentBlockEl.innerHTML = "";
-  if (!block) {
-    currentBlockEl.innerHTML = `<div class="muted">No block yet</div>`;
-  } else {
-    currentBlockEl.innerHTML = `
-      <div>Height: ${block.height}</div>
-      <div>Tx Count: ${block.txCount}</div>
-      <div>Hash: ${block.hash.slice(0,16)}...</div>
-    `;
-  }
-}
-
-function appendChatMessage(msg) {
-  const div = document.createElement("div");
-  div.className = "chat-item";
-  div.innerHTML = `<strong>${msg.from}</strong>: ${msg.text}`;
-  messagesList.appendChild(div);
-  messagesList.scrollTop = messagesList.scrollHeight;
-}
-
-// -------------------- Socket --------------------
-function connectSocket() {
-  if (!BACKEND_URL) {
-    console.error("BACKEND_URL not defined!");
-    return;
-  }
-
-  socket = io(BACKEND_URL, {
-    transports: ["websocket"],
-    reconnection: true,
-  });
-
-  socket.on("connect", () => {
-    isConnected = true;
-    console.log("✅ Connected to backend");
-    updateStatus("Connected");
-    showScreen("game");
-  });
-
-  socket.on("disconnect", () => {
-    isConnected = false;
-    console.warn("❌ Disconnected from backend");
-    updateStatus("Disconnected", true);
-  });
-
-  socket.on("players", renderPlayers);
-  socket.on("leaderboard", renderLeaderboard);
-  socket.on("chat_message", appendChatMessage);
-  socket.on("block_update", renderBlock);
-}
-
-// -------------------- Game Actions --------------------
-function joinGame() {
-  if (!socket || !isConnected) {
-    updateStatus("Not connected", true);
-    return;
-  }
-  const fid = prompt("Enter your Farcaster FID or username");
-  if (!fid) return;
-  userFid = fid;
-  userProfile = { name: fid };
-  socket.emit("join", { fid });
-}
-
-function submitPrediction() {
-  if (!socket || !isConnected) {
-    updateStatus("Not connected", true);
-    return;
-  }
-  const val = parseInt(predictionInput.value, 10);
-  if (isNaN(val)) {
-    updateStatus("Invalid prediction", true);
-    return;
-  }
-  socket.emit("prediction", { fid: userFid, value: val });
-  predictionInput.value = "";
-}
-
-function sendChat(e) {
-  if (e && e.preventDefault) e.preventDefault();
-  if (!socket || !isConnected) {
-    updateStatus("Not connected", true);
-    return;
-  }
-  const txt = chatInput ? chatInput.value : "";
-  if (!txt) return;
-  const payload = { fid: userFid, text: txt, timestamp: Date.now() };
-  socket.emit("chat_message", payload);
-  appendChatMessage({ from: userProfile?.name || userFid || "me", text: txt, timestamp: Date.now() });
-  if (chatInput) chatInput.value = "";
-}
-
-// -------------------- Wallet Connect --------------------
-async function connectEvmWallet() {
-  try {
-    if (window.sdk && window.sdk.wallet && typeof window.sdk.wallet.connect === "function") {
-      const walletInfo = await window.sdk.wallet.connect({ chainId: "8453" });
-      console.log("✅ Wallet connected via Farcaster:", walletInfo);
-      updateStatus(`Wallet connected: ${walletInfo.address}`);
-      return walletInfo;
-    }
-
-    if (window.ethereum) {
-      const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
-      const chainId = await window.ethereum.request({ method: "eth_chainId" });
-      console.log("✅ Wallet connected via injected wallet:", accounts[0], chainId);
-      updateStatus(`Wallet connected: ${accounts[0]} on chain ${chainId}`);
-      return { address: accounts[0], chainId };
-    }
-
-    updateStatus("No wallet provider found", true);
-    return null;
-  } catch (err) {
-    console.error("❌ Wallet connect failed", err);
-    updateStatus("Wallet connect failed", true);
-    return null;
-  }
-}
-
-// -------------------- Sign Message --------------------
-async function signMessageBase() {
-  try {
-    let dynamicMsg = `🚀 MiniApp Sign-in @ ${new Date().toLocaleString()}`;
-
-    if (window.sdk && window.sdk.wallet && typeof window.sdk.wallet.signMessage === "function") {
-      const sig = await window.sdk.wallet.signMessage({ message: dynamicMsg });
-      console.log("✅ Signed via Farcaster SDK:", sig);
-      updateStatus("🎉 Message signed successfully!");
-      return sig;
-    }
-
-    if (window.ethereum) {
-      const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
-      const from = accounts[0];
-      dynamicMsg = `✨ Proof for ${from} @ ${new Date().toLocaleTimeString()}`;
-      const sig = await window.ethereum.request({
-        method: "personal_sign",
-        params: [dynamicMsg, from],
-      });
-      console.log("✅ Signed via injected wallet:", sig);
-      updateStatus("🎉 Message signed successfully!");
-      return sig;
-    }
-
-    updateStatus("No wallet provider found", true);
-    return null;
-  } catch (err) {
-    console.error("❌ Sign message failed", err);
-    updateStatus("❌ Sign message failed", true);
-    return null;
-  }
-}
-
-// -------------------- Init --------------------
-document.addEventListener("DOMContentLoaded", () => {
-  if (joinBtn) joinBtn.addEventListener("click", joinGame);
-  if (submitPredictionBtn) submitPredictionBtn.addEventListener("click", submitPrediction);
-  if (chatForm) chatForm.addEventListener("submit", sendChat);
-  if (shareBtn) shareBtn.addEventListener("click", () => {
-    navigator.clipboard?.writeText(window.location.href)
-      .then(() => updateStatus("Link copied"))
-      .catch(() => updateStatus("Copy failed", true));
-  });
-  if (prevBlockBtn) prevBlockBtn.addEventListener("click", () => { socket && socket.emit("request_prev_block"); });
-  if (currBlockBtn) currBlockBtn.addEventListener("click", () => { socket && socket.emit("request_current_block"); });
-  if (connectWalletBtn) connectWalletBtn.addEventListener("click", connectEvmWallet);
-  if (signMessageBtn) signMessageBtn.addEventListener("click", signMessageBase);
-
-  updateStatus("Connecting...");
-  connectSocket();
 });
 
-// -------------------- Farcaster Ready --------------------
-try {
-  const sdkCandidate = window.miniApp || window.sdk || (typeof MiniAppSDK !== "undefined" ? MiniAppSDK : undefined);
-  if (sdkCandidate && sdkCandidate.actions && typeof sdkCandidate.actions.ready === "function") {
-    sdkCandidate.actions.ready();
-    console.log("[Farcaster] ready() called");
+socket.on("user_data", (user) => {
+  addPlayerToUI(user);
+});
+
+socket.on("players", (players) => {
+  playersDiv.innerHTML = "";
+  players.forEach(addPlayerToUI);
+  playerCount.textContent = `(${players.length})`;
+});
+
+function addPlayerToUI(user) {
+  playersDiv.innerHTML += `
+    <li class="player">
+      <img src="${user.pfp_url}" width="32" height="32" style="border-radius:50%;" />
+      <span>@${user.username} (${user.display_name})</span>
+    </li>
+  `;
+}
+
+// -------------------------
+// CHAT
+// -------------------------
+chatForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const msg = chatInput.value.trim();
+  if (msg) {
+    socket.emit("chat_message", msg);
+    chatInput.value = "";
   }
-} catch (e) { /* ignore */ }
+});
+
+socket.on("chat_message", (msg) => {
+  chatBox.innerHTML += `<div class="chat-line">${msg}</div>`;
+  chatBox.scrollTop = chatBox.scrollHeight;
+});
+
+// -------------------------
+// PREDICTION
+// -------------------------
+submitPredictionBtn.addEventListener("click", () => {
+  const value = predictionInput.value.trim();
+  if (value) {
+    socket.emit("prediction", { value });
+    predictionInput.value = "";
+  }
+});
+
+// -------------------------
+// CONTROLS
+// -------------------------
+shareBtn.addEventListener("click", () => {
+  const url = window.location.href;
+  navigator.clipboard.writeText(url).then(() => {
+    alert("Link copied to clipboard!");
+  });
+});
+
+prevBlockBtn.addEventListener("click", () => {
+  socket.emit("prev_block");
+});
+
+currBlockBtn.addEventListener("click", () => {
+  socket.emit("curr_block");
+});
+
+// -------------------------
+// LEADERBOARD
+// -------------------------
+socket.on("leaderboard", (data) => {
+  leaderboardDiv.innerHTML = "";
+  data.forEach((entry) => {
+    leaderboardDiv.innerHTML += `
+      <li>@${entry.username}: ${entry.score}</li>
+    `;
+  });
+});
+
+// -------------------------
+// FARCASTER WALLET & SDK
+// -------------------------
+let farcasterSdk = null;
+
+// Initialize Farcaster SDK when page loads
+async function initializeFarcasterSDK() {
+  try {
+    // Check if we're in a Farcaster context
+    if (typeof window.FarcasterMiniapp !== 'undefined') {
+      farcasterSdk = window.FarcasterMiniapp;
+      
+      // Call ready to signal the app is loaded
+      if (farcasterSdk.ready) {
+        await farcasterSdk.ready();
+      }
+      
+      console.log("✅ Farcaster SDK initialized");
+      return true;
+    }
+  } catch (err) {
+    console.warn("Farcaster SDK not available:", err);
+  }
+  return false;
+}
+
+async function connectFarcaster() {
+  try {
+    if (!farcasterSdk) {
+      await initializeFarcasterSDK();
+    }
+    
+    if (!farcasterSdk) {
+      alert("❌ Farcaster SDK not available. This app works best in Farcaster client.");
+      return;
+    }
+    
+    const res = await farcasterSdk.connect();
+    const { fid, username, custodyAddress } = res.user;
+
+    alert(`✅ Connected as @${username}\nFID: ${fid}\nWallet: ${custodyAddress}`);
+
+    // Auto-join game with Farcaster FID
+    socket.emit("join", { fid });
+
+    // Sign welcome message
+    const message = `Welcome to ${window.APP_NAME}!\nTime: ${new Date().toISOString()}`;
+    const signed = await farcasterSdk.signMessage(message);
+
+    alert(`✅ Signed!\nMessage: ${message}\n\nSignature: ${signed}`);
+  } catch (err) {
+    console.error("Farcaster connect error:", err);
+    alert("❌ Failed to connect Farcaster wallet");
+  }
+}
+
+connectWalletBtn.addEventListener("click", connectFarcaster);
+
+// -------------------------
+// SPLASH CONTROL
+// -------------------------
+let isAppReady = false;
+
+async function hideSplashAndShowGame() {
+  if (isAppReady) return;
+  
+  isAppReady = true;
+  document.getElementById("splashScreen").style.display = "none";
+  document.getElementById("gameScreen").style.display = "block";
+  
+  // Initialize Farcaster SDK after app is shown
+  await initializeFarcasterSDK();
+}
+
+socket.on("connect", async () => {
+  updateStatus("Connected ✅");
+  await hideSplashAndShowGame();
+});
+
+socket.on("disconnect", () => {
+  updateStatus("Disconnected ❌");
+});
+
+// fallback timeout - but shorter since we have dynamic backend detection
+setTimeout(async () => {
+  const splash = document.getElementById("splashScreen");
+  if (splash && splash.style.display !== "none") {
+    updateStatus("Loaded (fallback)");
+    await hideSplashAndShowGame();
+  }
+}, window.SPLASH_TIMEOUT || 3000);
+
+// Initialize app when DOM is ready
+document.addEventListener('DOMContentLoaded', async () => {
+  updateStatus("Initializing...");
+  
+  // If socket connects quickly, great. Otherwise fallback will handle it.
+  setTimeout(async () => {
+    if (!isAppReady) {
+      updateStatus("Ready");
+      await hideSplashAndShowGame();
+    }
+  }, 1000);
+});

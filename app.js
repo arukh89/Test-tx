@@ -50,7 +50,7 @@ async function hideSplashAndShowGame() {
   try {
     document.getElementById("splashScreen").style.display = "none";
     document.getElementById("gameScreen").style.display = "block";
-    await callSDKReady();
+    await callSDKReady(); // ✅ panggil ready() hanya sekali di sini
     isAppReady = true;
   } catch (e) {
     console.error("Error showing game screen", e);
@@ -83,7 +83,7 @@ function setupSocket() {
   socket.on("connect", () => {
     console.log("Socket connected");
     updateStatus("Connected to server ✅");
-    hideSplashAndShowGame();
+    hideSplashAndShowGame(); // panggil ready setelah socket siap
   });
 
   socket.on("disconnect", () => {
@@ -177,15 +177,8 @@ function setupEventListeners() {
 // =====================
 // Init
 // =====================
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener("DOMContentLoaded", () => {
   updateStatus("Initializing...");
-
-  // ✅ panggil SDK ready lebih awal supaya splash screen di Farcaster hilang
-  try {
-    await callSDKReady();
-  } catch (e) {
-    console.warn("early ready() failed", e);
-  }
 
   setupSocket();
   setupEventListeners();

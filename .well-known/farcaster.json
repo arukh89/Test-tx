@@ -6,25 +6,20 @@
   },
   "version": "1",
   "name": "TX Battle Royale",
+  "iconUrl": "https://testtx.netlify.app/icons/icon-192.png",
+  "homeUrl": "https://testtx.netlify.app/",
+  "imageUrl": "https://testtx.netlify.app/og.png",
+  "buttonTitle": "🎮 Play Now",
+  "splashImageUrl": "https://testtx.netlify.app/icons/splash.png",
+  "splashBackgroundColor": "#1a1a1a",
   "subtitle": "BTC Block Prediction",
   "description": "Predict Bitcoin block TX count and battle with friends in real time",
-  "tagline": "Compete and predict BTC blocks",
   "primaryCategory": "social",
   "tags": ["blockchain", "bitcoin", "prediction", "game", "realtime"],
-
-  "homeUrl": "https://testtx.netlify.app/",
-  "webhookUrl": "https://3ffe2d34-7fa9-4492-bdc8-68e9a2b9f021-00-3hy09jgnwmhu3.sisko.replit.dev/webhook",
-
-  "iconUrl": "https://testtx.netlify.app/icons/icon-192.png",
-  "imageUrl": "https://testtx.netlify.app/og.png",
   "heroImageUrl": "https://testtx.netlify.app/og.png",
+  "tagline": "Compete and predict BTC blocks",
   "ogTitle": "TX Battle Royale",
   "ogDescription": "Real-time Bitcoin block prediction battle. Guess transactions and climb the leaderboard!",
   "ogImageUrl": "https://testtx.netlify.app/og.png",
-
-  "splashImageUrl": "https://testtx.netlify.app/icons/splash.png",
-  "splashBackgroundColor": "#1a1a1a",
-
-  "buttonTitle": "🎮 Play Now",
-  "buttonAction": "open"
+  "webhookUrl": "https://3ffe2d34-7fa9-4492-bdc8-68e9a2b9f021-00-3hy09jgnwmhu3.sisko.replit.dev/webhook"
 }

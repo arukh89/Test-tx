@@ -1,414 +1,200 @@
-// ================================
-// FRONTEND LOGIC: TX Battle Royale (Hardened & Backward-compatible)
-// ================================
+// =====================
+// TX Battle Royale App
+// =====================
 
-// SOCKET CONNECTION
-const socket = (typeof io !== "undefined") ? io(window.BACKEND_URL) : null;
-if (!socket) console.warn("socket.io not available or not loaded yet.");
+// Global state
+let socket;
+let isAppReady = false;
+let playerName = "";
+let predictions = [];
 
-// Helper: try multiple IDs/selectors
-function getElByIds(...ids) {
-  for (const id of ids) {
-    if (!id) continue;
-    // if passed with # prefix, try querySelector; otherwise getElementById
-    if (id.startsWith("#")) {
-      const el = document.querySelector(id);
-      if (el) return el;
-    } else {
-      const el = document.getElementById(id);
-      if (el) return el;
-    }
-  }
-  return null;
-}
-
-// -------------------------
-// UI ELEMENTS (try multiple possible ids to avoid mismatch)
-const joinBtn = getElByIds("joinBtn");
-const shareBtn = getElByIds("shareBtn");
-const prevBlockBtn = getElByIds("prevBlockBtn");
-const currBlockBtn = getElByIds("currBlockBtn");
-const predictionInput = getElByIds("predictionInput");
-const submitPredictionBtn = getElByIds("submitPredictionBtn");
-
-const playersDiv = getElByIds("playersContainer", "players");
-const playerCount = getElByIds("playerCount");
-
-const chatBox = getElByIds("messagesList", "chatMessages", "chatBox");
-const chatInput = getElByIds("chatInput");
-const chatForm = getElByIds("chatForm");
-const chatSendBtn = getElByIds("chatSendBtn", "chatSend", "chatSubmit");
-
-const leaderboardDiv = getElByIds("leaderboardContainer", "leaderboardList");
-const connectWalletBtn = getElByIds("connectWalletBtn");
-
-const statusEl = getElByIds("status", "statusMessage");
-
-// Safe updateStatus
-function updateStatus(msg) {
-  try {
-    if (statusEl) statusEl.textContent = msg;
-    else console.log("[status]", msg);
-  } catch (e) {
-    console.error("updateStatus error:", e);
-  }
-}
-
-// Helper to append HTML safely
-function appendHTML(container, html) {
-  try {
-    if (!container) return;
-    container.insertAdjacentHTML("beforeend", html);
-  } catch (e) {
-    console.error("appendHTML error:", e);
-  }
-}
-
-// -------------------------
-// JOIN GAME
-if (joinBtn) {
-  joinBtn.addEventListener("click", () => {
-    try {
-      const fid = prompt("Masukkan FID Farcaster kamu:");
-      if (fid && socket) {
-        socket.emit("join", { fid });
-      }
-    } catch (e) {
-      console.error("joinBtn click error:", e);
-    }
-  });
-} else {
-  console.warn("joinBtn not found in DOM");
-}
-
-// Player UI helper
-function addPlayerToUI(user) {
-  try {
-    if (!playersDiv) return;
-    // keep markup consistent with existing UI (use divs if container is div)
-    const markup = `
-      <div class="player">
-        <img src="${user.pfp_url || ''}" width="32" height="32" style="border-radius:50%;" />
-        <span>@${user.username || ''} ${user.display_name ? `(${user.display_name})` : ""}</span>
-      </div>
-    `;
-    appendHTML(playersDiv, markup);
-  } catch (e) {
-    console.error("addPlayerToUI error:", e);
-  }
-}
-
-// socket players update
-if (socket) {
-  socket.on("players", (players) => {
-    try {
-      if (playersDiv) playersDiv.innerHTML = "";
-      (players || []).forEach((p) => addPlayerToUI(p));
-      if (playerCount) playerCount.textContent = `(${(players || []).length})`;
-    } catch (e) {
-      console.error("players handler error:", e);
-    }
-  });
-
-  socket.on("user_data", (user) => {
-    try {
-      addPlayerToUI(user);
-    } catch (e) {
-      console.error("user_data handler error:", e);
-    }
-  });
-}
-
-// -------------------------
-// CHAT: support both form submit or button click (defensive)
-if (chatForm) {
-  chatForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-    try {
-      const msg = (chatInput && chatInput.value) ? chatInput.value.trim() : "";
-      if (msg && socket) {
-        socket.emit("chat_message", msg);
-        if (chatBox) appendHTML(chatBox, `<div class="chat-line">${escapeHtml(msg)}</div>`);
-        if (chatInput) chatInput.value = "";
-      }
-    } catch (err) {
-      console.error("chatForm submit error:", err);
-    }
-  });
-} else if (chatSendBtn) {
-  chatSendBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    try {
-      const msg = (chatInput && chatInput.value) ? chatInput.value.trim() : "";
-      if (msg && socket) {
-        socket.emit("chat_message", msg);
-        if (chatBox) appendHTML(chatBox, `<div class="chat-line">${escapeHtml(msg)}</div>`);
-        if (chatInput) chatInput.value = "";
-      }
-    } catch (err) {
-      console.error("chatSendBtn click error:", err);
-    }
-  });
-} else {
-  console.warn("No chat form or send button found; chat input may not be usable.");
-}
-
-// helper escape to prevent possible markup injection from messages
-function escapeHtml(str) {
-  if (typeof str !== "string") return "";
-  return str.replace(/[&<>"']/g, function (m) {
-    return ({
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#39;'
-    })[m];
-  });
-}
-
-// socket chat_message handler
-if (socket) {
-  socket.on("chat_message", (msg) => {
-    try {
-      if (chatBox) {
-        appendHTML(chatBox, `<div class="chat-line">${escapeHtml(msg)}</div>`);
-        chatBox.scrollTop = chatBox.scrollHeight;
-      }
-    } catch (e) {
-      console.error("chat_message handler error:", e);
-    }
-  });
-}
-
-// -------------------------
-// PREDICTION
-if (submitPredictionBtn) {
-  submitPredictionBtn.addEventListener("click", () => {
-    try {
-      const value = predictionInput ? predictionInput.value.trim() : "";
-      if (value && socket) {
-        socket.emit("prediction", { value });
-        if (predictionInput) predictionInput.value = "";
-      }
-    } catch (e) {
-      console.error("submitPredictionBtn click error:", e);
-    }
-  });
-} else {
-  console.warn("submitPredictionBtn not found");
-}
-
-// -------------------------
-// CONTROLS
-if (shareBtn) {
-  shareBtn.addEventListener("click", () => {
-    try {
-      const url = window.location.href;
-      navigator.clipboard.writeText(url).then(() => {
-        alert("Link copied to clipboard!");
-      }).catch((err) => {
-        console.warn("copy failed:", err);
-      });
-    } catch (e) {
-      console.error("shareBtn click error:", e);
-    }
-  });
-}
-
-if (prevBlockBtn && socket) {
-  prevBlockBtn.addEventListener("click", () => { socket.emit("prev_block"); });
-}
-if (currBlockBtn && socket) {
-  currBlockBtn.addEventListener("click", () => { socket.emit("curr_block"); });
-}
-
-// -------------------------
-// LEADERBOARD
-if (socket) {
-  socket.on("leaderboard", (data) => {
-    try {
-      if (!leaderboardDiv) return;
-      // if it's a <ul>, render <li>, otherwise render <div> items
-      const isList = leaderboardDiv.tagName && leaderboardDiv.tagName.toLowerCase() === "ul";
-      leaderboardDiv.innerHTML = "";
-      (data || []).forEach((entry) => {
-        if (isList) {
-          appendHTML(leaderboardDiv, `<li>@${entry.username}: ${entry.score}</li>`);
-        } else {
-          appendHTML(leaderboardDiv, `<div class="leader-item">@${entry.username}: ${entry.score}</div>`);
-        }
-      });
-    } catch (e) {
-      console.error("leaderboard handler error:", e);
-    }
-  });
-}
-
-// -------------------------
-// FARCASTER WALLET & SDK
-let farcasterSdk = null;
-
+// =====================
+// Farcaster SDK Helpers
+// =====================
 async function initializeFarcasterSDK() {
+  let sdkInstance = null;
   try {
-    // Primary: some Farcaster clients inject SDK to window.farcasterSdk
     if (window.farcasterSdk) {
-      farcasterSdk = window.farcasterSdk;
-      console.log("✅ Farcaster SDK found on window.farcasterSdk");
-      return true;
+      sdkInstance = window.farcasterSdk;
+    } else if (window.FarcasterMiniapp) {
+      sdkInstance = window.FarcasterMiniapp;
+    } else if (window.miniapp) {
+      sdkInstance = window.miniapp;
+    } else {
+      console.warn("No Farcaster SDK found in window");
     }
-    // Secondary: some clients expose window.FarcasterMiniapp
-    if (window.FarcasterMiniapp) {
-      farcasterSdk = window.FarcasterMiniapp;
-      console.log("✅ Farcaster SDK found on window.FarcasterMiniapp");
-      return true;
-    }
-    // Last resort: sometimes the bundled module attaches a global 'miniapp'
-    if (window.miniapp) {
-      farcasterSdk = window.miniapp;
-      console.log("✅ Farcaster SDK found on window.miniapp");
-      return true;
-    }
-  } catch (err) {
-    console.warn("initializeFarcasterSDK check error:", err);
+  } catch (e) {
+    console.error("SDK init error", e);
   }
-  return false;
+  return sdkInstance;
 }
 
-// Try to call ready() using multiple flavors
 async function callSDKReady() {
   try {
-    if (farcasterSdk && farcasterSdk.actions && typeof farcasterSdk.actions.ready === "function") {
-      await farcasterSdk.actions.ready();
-      console.log("✅ Called farcasterSdk.actions.ready()");
-      return true;
-    }
-    if (farcasterSdk && typeof farcasterSdk.ready === "function") {
-      await farcasterSdk.ready();
-      console.log("✅ Called farcasterSdk.ready()");
-      return true;
-    }
-    if (window.FarcasterMiniapp && typeof window.FarcasterMiniapp.ready === "function") {
-      await window.FarcasterMiniapp.ready();
-      console.log("✅ Called window.FarcasterMiniapp.ready()");
-      return true;
-    }
-  } catch (err) {
-    console.warn("callSDKReady failed:", err);
-  }
-  return false;
-}
-
-async function connectFarcaster() {
-  try {
-    if (!farcasterSdk) await initializeFarcasterSDK();
-
-    if (!farcasterSdk || !farcasterSdk.actions) {
-      alert("❌ Farcaster SDK not available. This app works best inside Farcaster client.");
-      return;
-    }
-
-    const res = await farcasterSdk.actions.connect();
-    const { fid, username, custodyAddress } = res.user || {};
-
-    alert(`✅ Connected as @${username || "unknown"}\nFID: ${fid || "n/a"}\nWallet: ${custodyAddress || "n/a"}`);
-
-    // Auto-join by fid
-    if (fid && socket) socket.emit("join", { fid });
-
-    // Sign a welcome message
-    const message = `Welcome to ${window.APP_NAME || "TX Battle"}!\nTime: ${new Date().toISOString()}`;
-    if (farcasterSdk.actions && typeof farcasterSdk.actions.signMessage === "function") {
-      const signed = await farcasterSdk.actions.signMessage(message);
-      alert(`✅ Signed!\nMessage: ${message}\n\nSignature: ${signed}`);
-    } else if (typeof farcasterSdk.signMessage === "function") {
-      const signed = await farcasterSdk.signMessage(message);
-      alert(`✅ Signed!\nMessage: ${message}\n\nSignature: ${signed}`);
+    const sdk = await initializeFarcasterSDK();
+    if (sdk && sdk.actions && sdk.actions.ready) {
+      await sdk.actions.ready();
+      console.log("✅ Farcaster SDK ready called");
+    } else if (sdk && sdk.ready) {
+      await sdk.ready();
+      console.log("✅ Farcaster legacy ready called");
     } else {
-      console.warn("signMessage not available on SDK");
+      console.warn("⚠️ No ready() found in SDK");
     }
   } catch (err) {
-    console.error("Farcaster connect error:", err);
-    alert("❌ Failed to connect Farcaster wallet");
+    console.error("SDK ready error", err);
   }
 }
-
-// connect wallet button
-if (connectWalletBtn) {
-  connectWalletBtn.addEventListener("click", connectFarcaster);
-} else {
-  console.warn("connectWalletBtn not found");
-}
-
-// -------------------------
-// SPLASH CONTROL & SDK READY
-let isAppReady = false;
 
 async function hideSplashAndShowGame() {
-  if (isAppReady) return;
-  isAppReady = true;
-
   try {
-    // Try to initialize Farcaster SDK (non-blocking)
-    await initializeFarcasterSDK();
+    document.getElementById("splashScreen").style.display = "none";
+    document.getElementById("gameScreen").style.display = "block";
+    await callSDKReady();
+    isAppReady = true;
   } catch (e) {
-    console.warn("init sdk error:", e);
+    console.error("Error showing game screen", e);
   }
-
-  // Hide splash / show UI safely
-  try {
-    const splash = getElByIds("splashScreen");
-    const game = getElByIds("gameScreen");
-    if (splash) splash.style.display = "none";
-    if (game) game.style.display = "block";
-  } catch (e) {
-    console.warn("hide/show DOM error:", e);
-  }
-
-  // Call SDK ready (best-effort)
-  try {
-    const ok = await callSDKReady();
-    if (ok) updateStatus("Farcaster SDK Ready ✅");
-    else updateStatus("App Ready ✅");
-  } catch (e) {
-    console.warn("callSDKReady error:", e);
-    updateStatus("App Ready (no sdk)");
-  }
-
-  console.log("✅ App loaded and visible");
 }
 
-// socket connection events
-if (socket) {
-  socket.on("connect", async () => {
-    updateStatus("Socket Connected");
-    try { await hideSplashAndShowGame(); } catch (e) { console.error(e); }
+// =====================
+// UI Updates
+// =====================
+function updateStatus(msg) {
+  const el = document.getElementById("statusMessage");
+  if (el) el.textContent = msg;
+}
+
+function addChatMessage(author, message) {
+  const chatMessages = document.getElementById("chatMessages");
+  const div = document.createElement("div");
+  div.className = "chat-message";
+  div.innerHTML = `<strong>${author}:</strong> ${message}`;
+  chatMessages.appendChild(div);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// =====================
+// Socket Events
+// =====================
+function setupSocket() {
+  socket = io();
+
+  socket.on("connect", () => {
+    console.log("Socket connected");
+    updateStatus("Connected to server ✅");
+    hideSplashAndShowGame();
   });
 
   socket.on("disconnect", () => {
-    updateStatus("Socket Disconnected ❌");
+    console.log("Socket disconnected");
+    updateStatus("Disconnected ❌");
   });
-} else {
-  // If no socket library (local testing), still try to show UI after timeout
-  console.warn("Socket not initialized; running fallback show");
+
+  socket.on("chatMessage", (data) => {
+    addChatMessage(data.author, data.message);
+  });
+
+  socket.on("playerList", (list) => {
+    const container = document.getElementById("playersContainer");
+    container.innerHTML = "";
+    list.forEach((p) => {
+      const div = document.createElement("div");
+      div.textContent = p;
+      container.appendChild(div);
+    });
+    document.getElementById("playerCount").textContent = `${list.length} players joined`;
+  });
+
+  socket.on("leaderboard", (board) => {
+    const ul = document.getElementById("leaderboardList");
+    ul.innerHTML = "";
+    board.forEach((entry) => {
+      const li = document.createElement("li");
+      li.textContent = `${entry.player} - ${entry.score}`;
+      ul.appendChild(li);
+    });
+  });
 }
 
-// DOM ready fallback logic
+// =====================
+// Event Listeners
+// =====================
+function setupEventListeners() {
+  const joinBtn = document.getElementById("joinBtn");
+  if (joinBtn) {
+    joinBtn.addEventListener("click", () => {
+      playerName = `Player-${Math.floor(Math.random() * 1000)}`;
+      socket.emit("join", playerName);
+      updateStatus(`Joined as ${playerName}`);
+    });
+  }
+
+  const chatSendBtn = document.getElementById("chatSendBtn");
+  if (chatSendBtn) {
+    chatSendBtn.addEventListener("click", () => {
+      const input = document.getElementById("chatInput");
+      if (input.value.trim() !== "") {
+        socket.emit("chatMessage", { author: playerName, message: input.value });
+        input.value = "";
+      }
+    });
+  }
+
+  const submitPredictionBtn = document.getElementById("submitPredictionBtn");
+  if (submitPredictionBtn) {
+    submitPredictionBtn.addEventListener("click", () => {
+      const input = document.getElementById("predictionInput");
+      const val = parseInt(input.value, 10);
+      if (!isNaN(val)) {
+        predictions.push(val);
+        socket.emit("prediction", { player: playerName, value: val });
+        updateStatus(`Prediction submitted: ${val}`);
+        input.value = "";
+      }
+    });
+  }
+
+  const connectWalletBtn = document.getElementById("connectWalletBtn");
+  if (connectWalletBtn) {
+    connectWalletBtn.addEventListener("click", async () => {
+      try {
+        const sdk = await initializeFarcasterSDK();
+        if (sdk?.wallet?.connect) {
+          await sdk.wallet.connect();
+          updateStatus("Wallet connected ✅");
+        } else {
+          alert("Wallet connect not available");
+        }
+      } catch (e) {
+        console.error("Wallet connect error", e);
+        updateStatus("Wallet connection failed ❌");
+      }
+    });
+  }
+}
+
+// =====================
+// Init
+// =====================
 document.addEventListener("DOMContentLoaded", async () => {
   updateStatus("Initializing...");
-  // Short timeout: if socket hasn't connected in short time, show UI anyway
+
+  // ✅ panggil SDK ready lebih awal supaya splash screen di Farcaster hilang
+  try {
+    await callSDKReady();
+  } catch (e) {
+    console.warn("early ready() failed", e);
+  }
+
+  setupSocket();
+  setupEventListeners();
+
+  // fallback jaga-jaga
   setTimeout(async () => {
     if (!isAppReady) {
-      updateStatus("Loading complete");
-      try { await hideSplashAndShowGame(); } catch (e) { console.error(e); }
+      updateStatus("Forcing UI ready...");
+      await hideSplashAndShowGame();
     }
-  }, 2000);
+  }, 5000);
 });
-
-// Final safety fallback to ensure UI shows
-setTimeout(async () => {
-  if (!isAppReady) {
-    updateStatus("Loaded (fallback)");
-    try { await hideSplashAndShowGame(); } catch (e) { console.error(e); }
-  }
-}, 5000);
